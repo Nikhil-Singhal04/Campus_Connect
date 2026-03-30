@@ -39,7 +39,7 @@ function App() {
         <section className="animate-fadeUp text-center">
           {/* <p className="text-sm font-semibold uppercase tracking-[0.15em] text-[#71f3d5]">Campus Connect Insight</p> */}
           <h1 className="mx-auto mt-6 max-w-[20ch] font-display text-4xl font-bold leading-[1.08] md:text-6xl lg:text-7xl">
-            Your Campus, Your Network
+            Discover, Engage, Belong
           </h1>
         </section>
       </main>
