@@ -68,7 +68,7 @@ function App() {
 
         <section id="events" className="mt-14 text-center">
           <div className="mb-7">
-            <h2 className="font-display text-3xl font-bold text-[#ecf4ff] md:text-4xl">Why Campus Connect</h2>
+            <h2 className="font-display text-3xl font-bold text-[#ecf4ff] md:text-4xl">Why Campus </h2>
             <p className="mt-2 text-[#a9bbde]">Everything needed to run and join events in one place.</p>
           </div>
 
