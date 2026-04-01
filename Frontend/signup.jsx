@@ -372,8 +372,7 @@ function SignupPage() {
           </div>
         </section>
 
-        <section className="flex min-h-0 flex-col bg-[linear-gradient(180deg,#0d1b3d,#08142d)] p-5 md:p-8">
-    <section className="flex min-h-0 flex-col bg-[linear-gradient(180deg,#ffffff,#f5faff)] p-5 md:p-8">
+        <section className="flex min-h-0 flex-col bg-[linear-gradient(180deg,#ffffff,#f5faff)] p-5 md:p-8">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <p className="font-display text-xl font-semibold text-[#1a2a3d]">Sign up</p>

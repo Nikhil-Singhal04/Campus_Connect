@@ -79,22 +79,21 @@ function SigninPage() {
           </div>
         </section>
 
-        <section className="flex items-center bg-[linear-gradient(180deg,#0d1b3d,#08142d)] p-5 md:p-8">
-      <section className="flex items-center bg-[linear-gradient(180deg,#ffffff,#f5faff)] p-5 md:p-8">
+        <section className="flex items-center bg-[linear-gradient(180deg,#ffffff,#f5faff)] p-5 md:p-8">
           <div className="w-full animate-fadeUp">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <p className="font-display text-xl font-semibold text-[#1a2a3d]">Sign in</p>
-                  <p className="text-sm text-[#5f748a]">Access your account</p>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <p className="font-display text-xl font-semibold text-[#1a2a3d]">Sign in</p>
+                <p className="text-sm text-[#5f748a]">Access your account</p>
               </div>
-                <a href="index.html" className="text-sm text-[#0e8f84] underline underline-offset-4 hover:text-[#0d7a72]">Home</a>
+              <a href="index.html" className="text-sm text-[#0e8f84] underline underline-offset-4 hover:text-[#0d7a72]">Home</a>
             </div>
 
             <form onSubmit={handleSubmit} noValidate>
-                <label className="block text-sm text-[#24344a]">
+              <label className="block text-sm text-[#24344a]">
                 Official email
-                  <input
-                    className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-[#ffffff] px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                <input
+                  className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-[#ffffff] px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
                   type="email"
                   name="email"
                   value={formData.email}
@@ -103,7 +102,7 @@ function SigninPage() {
                 />
               </label>
 
-              <label className="mt-3 block text-sm text-[#dfe9ff]">
+              <label className="mt-3 block text-sm text-[#24344a]">
                 Password
                 <input
                   className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-[#ffffff] px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
@@ -114,7 +113,6 @@ function SigninPage() {
                   placeholder="Enter your password"
                 />
               </label>
-              <label className="text-sm text-[#24344a]">
 
               <button
                 type="submit"
