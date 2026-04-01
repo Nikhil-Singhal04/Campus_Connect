@@ -38,9 +38,9 @@ function App() {
         </a>
 
         <nav className="hidden items-center gap-8 text-base font-bold text-[#24344a] lg:flex">
-          <a href="index.html" className="transition hover:text-[#0e8f84]">Home</a>
-          <a href="#events" className="transition hover:text-[#0e8f84]">Events</a>
-          <a href="#about" className="transition hover:text-[#0e8f84]">About</a>
+          <a href="index.html" className="transition hover:text-[#0e8f84]">Pratik</a>
+          <a href="#events" className="transition hover:text-[#0e8f84]">Nikhil</a>
+          <a href="#about" className="transition hover:text-[#0e8f84]">Abhi</a>
           <a href="#contact" className="transition hover:text-[#0e8f84]">Contact</a>
         </nav>
       </header>
