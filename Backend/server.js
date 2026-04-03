@@ -17,6 +17,7 @@ const {
   OTP_EXPIRY_MINUTES = "10",
   OTP_PEPPER,
   REQUIRE_EMAIL_OTP = "false",
+  DEV_ADMIN_KEY = "",
   RESEND_API_KEY,
   RESEND_FROM_EMAIL,
   RESEND_AUDIENCE_NAME = "Campus Connect"
@@ -89,6 +90,14 @@ const authLimiter = rateLimit({
   message: { message: "Too many attempts. Please slow down." }
 });
 
+const adminLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many admin requests. Please slow down." }
+});
+
 app.use(globalLimiter);
 
 function run(sql, params = []) {
@@ -115,6 +124,18 @@ function get(sql, params = []) {
   });
 }
 
+function all(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(rows || []);
+    });
+  });
+}
+
 function hashOtp(code) {
   return crypto.createHash("sha256").update(`${code}:${OTP_PEPPER}`).digest("hex");
 }
@@ -133,6 +154,42 @@ function isValidUsername(username) {
 
 function jsonError(res, status, message) {
   res.status(status).json({ message });
+}
+
+function constantTimeEqual(a, b) {
+  const left = Buffer.from(String(a || ""));
+  const right = Buffer.from(String(b || ""));
+  if (left.length !== right.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(left, right);
+}
+
+function getAdminKeyFromRequest(req) {
+  const headerKey = String(req.headers["x-admin-key"] || "").trim();
+  if (headerKey) {
+    return headerKey;
+  }
+
+  const authHeader = String(req.headers.authorization || "");
+  if (authHeader.startsWith("Bearer ")) {
+    return authHeader.slice(7).trim();
+  }
+
+  return "";
+}
+
+function requireDeveloper(req, res, next) {
+  if (!String(DEV_ADMIN_KEY || "").trim()) {
+    return jsonError(res, 503, "Admin access is not configured on this server.");
+  }
+
+  const provided = getAdminKeyFromRequest(req);
+  if (!provided || !constantTimeEqual(provided, DEV_ADMIN_KEY)) {
+    return jsonError(res, 403, "Developer access denied.");
+  }
+
+  return next();
 }
 
 function getSessionPayload(req) {
@@ -190,6 +247,32 @@ async function initializeDatabase() {
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "campus-connect-auth-api" });
+});
+
+app.get("/api/admin/users", adminLimiter, requireDeveloper, async (_req, res) => {
+  try {
+    const users = await all(
+      `SELECT
+        id,
+        account_type AS accountType,
+        first_name AS firstName,
+        last_name AS lastName,
+        reg_no AS regNo,
+        department,
+        program_or_unit AS programOrUnit,
+        year_or_designation AS yearOrDesignation,
+        email,
+        username,
+        created_at AS createdAt
+       FROM users
+       ORDER BY id DESC`
+    );
+
+    res.json({ count: users.length, users });
+  } catch (error) {
+    console.error("Admin list users error:", error);
+    return jsonError(res, 500, "Could not fetch users right now.");
+  }
 });
 
 app.post("/api/auth/otp/send", otpLimiter, async (req, res) => {

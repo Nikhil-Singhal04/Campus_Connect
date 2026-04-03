@@ -13,7 +13,7 @@ const MOCK_EVENTS = [
     time: "10:00 AM",
     location: "CSE Lab 1",
     description: "Annual programming competition for all students",
-    image: "assets/events/coding.svg"
+    image: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80"
   },
   {
     id: 2,
@@ -24,7 +24,7 @@ const MOCK_EVENTS = [
     time: "2:00 PM",
     location: "MBA Conference Hall",
     description: "Learn digital marketing strategies and techniques",
-    image: "assets/events/marketing.svg"
+    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80"
   },
   {
     id: 3,
@@ -35,7 +35,7 @@ const MOCK_EVENTS = [
     time: "9:00 AM",
     location: "Civil Engineering Building",
     description: "Design and simulate bridge structures",
-    image: "assets/events/civil.svg"
+    image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6121?auto=format&fit=crop&w=1200&q=80"
   },
   {
     id: 4,
@@ -46,7 +46,7 @@ const MOCK_EVENTS = [
     time: "3:00 PM",
     location: "Main Auditorium",
     description: "Inter-department public speaking competition",
-    image: "assets/events/speaking.svg"
+    image: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=80"
   },
   {
     id: 5,
@@ -57,7 +57,7 @@ const MOCK_EVENTS = [
     time: "11:00 AM",
     location: "Agriculture Department",
     description: "Modern techniques for maximizing crop yield",
-    image: "assets/events/agriculture.svg"
+    image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80"
   },
   {
     id: 6,
@@ -68,7 +68,7 @@ const MOCK_EVENTS = [
     time: "6:00 PM",
     location: "Campus Ground",
     description: "Celebrate different cultures with music, dance, and food",
-    image: "assets/events/cultural.svg"
+    image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80"
   },
   {
     id: 7,
@@ -79,7 +79,7 @@ const MOCK_EVENTS = [
     time: "1:00 PM",
     location: "CSE Lab 2",
     description: "Design efficient database schemas",
-    image: "assets/events/coding.svg"
+    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80"
   },
   {
     id: 8,
@@ -90,7 +90,7 @@ const MOCK_EVENTS = [
     time: "10:00 AM",
     location: "MBA Block",
     description: "Optimize supply chain operations",
-    image: "assets/events/workshop.svg"
+    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80"
   },
   {
     id: 9,
@@ -101,7 +101,7 @@ const MOCK_EVENTS = [
     time: "2:00 PM",
     location: "Agriculture Auditorium",
     description: "Sustainable soil management practices",
-    image: "assets/events/seminar.svg"
+    image: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1200&q=80"
   },
   {
     id: 10,
@@ -112,7 +112,7 @@ const MOCK_EVENTS = [
     time: "11:00 AM",
     location: "Civil Building",
     description: "Learn advanced structural analysis techniques",
-    image: "assets/events/civil.svg"
+    image: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80"
   }
 ];
 
@@ -120,26 +120,7 @@ const DEPARTMENTS = ["All", "CSE", "Civil", "MBA", "Agriculture"];
 const EVENT_TYPES = ["All", "Coding", "Marketing", "Public Speaking", "Cultural", "Workshop", "Seminar"];
 
 function getFallbackEventImage() {
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
-      <defs>
-        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#eff7ff" />
-          <stop offset="100%" stop-color="#dbeeff" />
-        </linearGradient>
-      </defs>
-      <rect width="600" height="400" fill="url(#g)" />
-      <rect x="0" y="280" width="600" height="120" fill="#c8dced" />
-      <circle cx="80" cy="70" r="45" fill="#149a8e" fill-opacity="0.18" />
-      <circle cx="530" cy="330" r="60" fill="#1f3149" fill-opacity="0.1" />
-      <rect x="170" y="120" width="260" height="150" rx="16" fill="#f4f9ff" stroke="#b6ccdf" />
-      <circle cx="230" cy="175" r="18" fill="#149a8e" fill-opacity="0.7" />
-      <rect x="260" y="160" width="130" height="10" rx="5" fill="#7e9ab4" />
-      <rect x="260" y="182" width="95" height="10" rx="5" fill="#a2b8cd" />
-      <rect x="205" y="215" width="190" height="12" rx="6" fill="#d7e5f2" />
-    </svg>
-  `;
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  return "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80";
 }
 
 function DashboardPage() {
