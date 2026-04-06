@@ -152,7 +152,7 @@ function SignupPage() {
 
       if (!formData.yearOrDesignation.trim()) {
         return formData.accountType === "Student"
-          ? "Please enter your semester."
+          ? "Please select your year."
           : "Please enter your designation.";
       }
       return "";
@@ -524,15 +524,30 @@ function SignupPage() {
                 </div>
 
                   <label className="mt-3 block text-sm text-[#24344a]">
-                  {formData.accountType === "Student" ? "Semester" : "Designation"}
-                  <input
-                    className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-[#ffffff] px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
-                    type="text"
-                    name="yearOrDesignation"
-                    value={formData.yearOrDesignation}
-                    onChange={handleInput}
-                    placeholder={formData.accountType === "Student" ? "Semester 3" : "Event Coordinator"}
-                  />
+                  {formData.accountType === "Student" ? "Year" : "Designation"}
+                  {formData.accountType === "Student" ? (
+                    <select
+                      className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-[#ffffff] px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                      name="yearOrDesignation"
+                      value={formData.yearOrDesignation}
+                      onChange={handleInput}
+                    >
+                      <option value="">Select year</option>
+                      <option value="1st year">1st Year</option>
+                      <option value="2nd year">2nd Year</option>
+                      <option value="3rd year">3rd Year</option>
+                      <option value="4th year">4th Year</option>
+                    </select>
+                  ) : (
+                    <input
+                      className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-[#ffffff] px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                      type="text"
+                      name="yearOrDesignation"
+                      value={formData.yearOrDesignation}
+                      onChange={handleInput}
+                      placeholder="Event Coordinator"
+                    />
+                  )}
                 </label>
               </div>
             )}
