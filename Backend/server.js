@@ -23,12 +23,19 @@ const {
   RESEND_AUDIENCE_NAME = "Campus Connect"
 } = process.env;
 
-if (!JWT_SECRET || !OTP_PEPPER || !RESEND_API_KEY || !RESEND_FROM_EMAIL) {
+const emailOtpEnabled = String(REQUIRE_EMAIL_OTP).toLowerCase() === "true";
+
+if (!JWT_SECRET || !OTP_PEPPER) {
   console.error("Missing required env vars. Check backend/.env.example");
   process.exit(1);
 }
 
-const resend = new Resend(RESEND_API_KEY);
+if (emailOtpEnabled && (!RESEND_API_KEY || !RESEND_FROM_EMAIL)) {
+  console.error("REQUIRE_EMAIL_OTP=true requires RESEND_API_KEY and RESEND_FROM_EMAIL.");
+  process.exit(1);
+}
+
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 const app = express();
 const dbPath = path.join(__dirname, "auth.db");
 const db = new sqlite3.Database(dbPath);
@@ -426,33 +433,41 @@ app.post("/api/auth/otp/send", otpLimiter, async (req, res) => {
       [email, codeHash, expiresAt, now]
     );
 
-    const sendResult = await resend.emails.send({
-      from: RESEND_FROM_EMAIL,
-      to: email,
-      subject: `${RESEND_AUDIENCE_NAME} email verification code`,
-      html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827">
-          <h2 style="margin-bottom:8px">Verify Your Email</h2>
-          <p>Your one-time verification code is:</p>
-          <p style="font-size:28px;font-weight:700;letter-spacing:4px;margin:12px 0">${code}</p>
-          <p>This code expires in ${OTP_EXPIRY_MINUTES} minutes.</p>
-          <p>If you did not request this, you can ignore this email.</p>
-        </div>
-      `
-    });
+    if (resend && RESEND_FROM_EMAIL) {
+      const sendResult = await resend.emails.send({
+        from: RESEND_FROM_EMAIL,
+        to: email,
+        subject: `${RESEND_AUDIENCE_NAME} email verification code`,
+        html: `
+          <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827">
+            <h2 style="margin-bottom:8px">Verify Your Email</h2>
+            <p>Your one-time verification code is:</p>
+            <p style="font-size:28px;font-weight:700;letter-spacing:4px;margin:12px 0">${code}</p>
+            <p>This code expires in ${OTP_EXPIRY_MINUTES} minutes.</p>
+            <p>If you did not request this, you can ignore this email.</p>
+          </div>
+        `
+      });
 
-    if (sendResult && sendResult.error) {
-      console.error("Resend provider error:", sendResult.error);
-      return jsonError(
-        res,
-        502,
-        sendResult.error.message || "Email provider rejected the message."
-      );
+      if (sendResult && sendResult.error) {
+        console.error("Resend provider error:", sendResult.error);
+        return jsonError(
+          res,
+          502,
+          sendResult.error.message || "Email provider rejected the message."
+        );
+      }
+
+      return res.json({
+        message: "Verification code sent.",
+        providerMessageId: sendResult && sendResult.data ? sendResult.data.id : null
+      });
     }
 
+    console.log(`[DEV OTP] ${email} -> ${code}`);
     return res.json({
       message: "Verification code sent.",
-      providerMessageId: sendResult && sendResult.data ? sendResult.data.id : null
+      providerMessageId: null
     });
   } catch (error) {
     console.error("OTP send error:", error);
