@@ -675,7 +675,7 @@ app.post("/api/events/:id/register", authLimiter, async (req, res) => {
     }
 
     const event = await get(
-      `SELECT id, title, approval_status AS approvalStatus, max_team_size AS maxTeamSize
+      `SELECT id, title, approval_status AS approvalStatus, max_team_size AS maxTeamSize, date
        FROM events
        WHERE id = ?`,
       [eventId]
@@ -683,6 +683,21 @@ app.post("/api/events/:id/register", authLimiter, async (req, res) => {
 
     if (!event || event.approvalStatus !== "Approved") {
       return jsonError(res, 404, "Event not found or unavailable.");
+    }
+
+    // Check if event date has passed
+    if (event.date) {
+      try {
+        const eventDate = new Date(event.date);
+        const today = new Date();
+        eventDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        if (eventDate < today) {
+          return jsonError(res, 410, "Cannot register for past events.");
+        }
+      } catch (_dateError) {
+        // Continue if date parsing fails
+      }
     }
 
     const fullName = String(req.body.name || `${user.first_name || ""} ${user.last_name || ""}`).trim();
