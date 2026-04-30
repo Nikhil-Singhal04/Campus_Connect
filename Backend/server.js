@@ -5,8 +5,9 @@ const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
 const crypto = require("crypto");
 const path = require("path");
-const sqlite3 = require("sqlite3").verbose();
 const { Resend } = require("resend");
+const { pool, run, get, all, close } = require("./db");
+const { initializeDatabase } = require("./init-db");
 require("dotenv").config();
 
 const {
@@ -44,8 +45,6 @@ if (emailOtpEnabled && (!RESEND_API_KEY || !RESEND_FROM_EMAIL)) {
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 const app = express();
-const dbPath = path.join(__dirname, "auth.db");
-const db = new sqlite3.Database(dbPath);
 const allowedOrigins = String(FRONTEND_ORIGIN)
   .split(",")
   .map((origin) => origin.trim())
@@ -134,42 +133,6 @@ const adminLimiter = rateLimit({
 });
 
 app.use(globalLimiter);
-
-function run(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function onRun(err) {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(this);
-    });
-  });
-}
-
-function get(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(row);
-    });
-  });
-}
-
-function all(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(rows || []);
-    });
-  });
-}
 
 function hashOtp(code) {
   return crypto.createHash("sha256").update(`${code}:${OTP_PEPPER}`).digest("hex");
@@ -287,127 +250,7 @@ function getSessionPayload(req) {
   }
 }
 
-async function initializeDatabase() {
-  await run(`
-    CREATE TABLE IF NOT EXISTS otp_challenges (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT NOT NULL,
-      code_hash TEXT NOT NULL,
-      expires_at INTEGER NOT NULL,
-      attempts INTEGER NOT NULL DEFAULT 0,
-      verified INTEGER NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL
-    )
-  `);
-
-  await run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      account_type TEXT NOT NULL,
-      first_name TEXT NOT NULL,
-      last_name TEXT NOT NULL,
-      reg_no TEXT NOT NULL,
-      department TEXT NOT NULL,
-      program_or_unit TEXT NOT NULL,
-      year_or_designation TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      username TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      created_at INTEGER NOT NULL
-    )
-  `);
-
-  await run(`
-    CREATE TABLE IF NOT EXISTS events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      event_type TEXT NOT NULL,
-      department TEXT NOT NULL,
-      date TEXT NOT NULL,
-      time TEXT NOT NULL,
-      location TEXT NOT NULL,
-      description TEXT NOT NULL,
-      event_price TEXT NOT NULL DEFAULT 'Free',
-      max_team_size INTEGER NOT NULL DEFAULT 6,
-      poster_image TEXT,
-      approval_status TEXT NOT NULL DEFAULT 'Pending',
-      edit_change_summary TEXT,
-      edit_requested_at INTEGER,
-      delete_request_reason TEXT,
-      delete_requested_at INTEGER,
-      organizer_id INTEGER NOT NULL,
-      created_by TEXT NOT NULL,
-      created_at INTEGER NOT NULL,
-      FOREIGN KEY (organizer_id) REFERENCES users(id)
-    )
-  `);
-
-  await run(`
-    CREATE TABLE IF NOT EXISTS event_registrations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      event_id INTEGER NOT NULL,
-      user_id INTEGER NOT NULL,
-      full_name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      phone TEXT NOT NULL,
-      year_or_designation TEXT,
-      notes TEXT,
-      pricing_label TEXT NOT NULL DEFAULT 'Free Entry',
-      payment_path TEXT,
-      created_at INTEGER NOT NULL,
-      UNIQUE(event_id, user_id),
-      FOREIGN KEY (event_id) REFERENCES events(id),
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    )
-  `);
-
-  await run(`CREATE INDEX IF NOT EXISTS idx_event_registrations_event_id ON event_registrations(event_id)`);
-  await run(`CREATE INDEX IF NOT EXISTS idx_event_registrations_user_id ON event_registrations(user_id)`);
-
-  const eventColumns = await all(`PRAGMA table_info(events)`);
-  const registrationColumns = await all(`PRAGMA table_info(event_registrations)`);
-  const hasPosterImage = eventColumns.some((column) => column.name === "poster_image");
-  const hasApprovalStatus = eventColumns.some((column) => column.name === "approval_status");
-  const hasEventPrice = eventColumns.some((column) => column.name === "event_price");
-  const hasMaxTeamSize = eventColumns.some((column) => column.name === "max_team_size");
-  const hasEditChangeSummary = eventColumns.some((column) => column.name === "edit_change_summary");
-  const hasEditRequestedAt = eventColumns.some((column) => column.name === "edit_requested_at");
-  const hasDeleteRequestReason = eventColumns.some((column) => column.name === "delete_request_reason");
-  const hasDeleteRequestedAt = eventColumns.some((column) => column.name === "delete_requested_at");
-  const hasPaymentPath = registrationColumns.some((column) => column.name === "payment_path");
-  if (!hasPosterImage) {
-    await run(`ALTER TABLE events ADD COLUMN poster_image TEXT`);
-  }
-  if (!hasApprovalStatus) {
-    await run(`ALTER TABLE events ADD COLUMN approval_status TEXT NOT NULL DEFAULT 'Pending'`);
-    await run(`UPDATE events SET approval_status = 'Pending' WHERE approval_status IS NULL OR approval_status = ''`);
-  }
-  if (!hasEventPrice) {
-    await run(`ALTER TABLE events ADD COLUMN event_price TEXT NOT NULL DEFAULT 'Free'`);
-    await run(`UPDATE events SET event_price = 'Free' WHERE event_price IS NULL OR event_price = ''`);
-  }
-  if (!hasMaxTeamSize) {
-    await run(`ALTER TABLE events ADD COLUMN max_team_size INTEGER NOT NULL DEFAULT 6`);
-    await run(`UPDATE events SET max_team_size = 6 WHERE max_team_size IS NULL OR max_team_size < 1`);
-  }
-  await run(`UPDATE events SET max_team_size = 6 WHERE max_team_size > 6`);
-  if (!hasEditChangeSummary) {
-    await run(`ALTER TABLE events ADD COLUMN edit_change_summary TEXT`);
-  }
-  if (!hasEditRequestedAt) {
-    await run(`ALTER TABLE events ADD COLUMN edit_requested_at INTEGER`);
-  }
-  if (!hasDeleteRequestReason) {
-    await run(`ALTER TABLE events ADD COLUMN delete_request_reason TEXT`);
-  }
-  if (!hasDeleteRequestedAt) {
-    await run(`ALTER TABLE events ADD COLUMN delete_requested_at INTEGER`);
-  }
-  if (!hasPaymentPath) {
-    await run(`ALTER TABLE event_registrations ADD COLUMN payment_path TEXT`);
-  }
-}
-
+// Database initialization is now in init-db.js
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "campus-connect-auth-api" });
 });
