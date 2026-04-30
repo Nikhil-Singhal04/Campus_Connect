@@ -38,6 +38,7 @@ function DashboardPage() {
   const [selectedDept, setSelectedDept] = useState("All");
   const [selectedEventType, setSelectedEventType] = useState("All");
   const [viewMode, setViewMode] = useState("grid");
+  const [eventStatus, setEventStatus] = useState("upcoming");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
 
@@ -168,8 +169,28 @@ function DashboardPage() {
   }, []);
 
   const filteredEvents = useMemo(() => {
-    return events;
-  }, [events]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return events.filter(event => {
+      if (!event.date) return true;
+      
+      try {
+        const eventDate = new Date(event.date);
+        eventDate.setHours(0, 0, 0, 0);
+        
+        if (eventStatus === "upcoming") {
+          return eventDate >= today;
+        } else if (eventStatus === "past") {
+          return eventDate < today;
+        }
+      } catch (_error) {
+        return true;
+      }
+      
+      return true;
+    });
+  }, [events, eventStatus]);
 
   const displayName = useMemo(() => {
     const first = (user.firstName || "").trim();
@@ -218,6 +239,19 @@ function DashboardPage() {
   const registeredEventIdSet = useMemo(() => {
     return new Set(myRegistrations.map((registration) => Number(registration.eventId)).filter(Number.isFinite));
   }, [myRegistrations]);
+
+  function isEventPast(eventDate) {
+    if (!eventDate) return false;
+    try {
+      const event = new Date(eventDate);
+      const today = new Date();
+      event.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      return event < today;
+    } catch (_error) {
+      return false;
+    }
+  }
 
   function handleRegisterClick(eventItem) {
     if (!eventItem) return;
@@ -347,26 +381,13 @@ function DashboardPage() {
           </div>
         </section>
 
-        <div className="mt-10 mb-8">
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-[#16263a] md:text-xl">Event Categories</h2>
-              {/* <p className="mt-1 text-sm text-[#5a6f86]">Filter by the event type you want to browse.</p> */}
-            </div>
-            <button
-              onClick={reloadEvents}
-              disabled={isReloadingEvents}
-              className="rounded-full border border-[#bcd4e7] bg-white px-4 py-2 text-sm font-semibold text-[#0e8f84] transition hover:bg-[#f5faff] disabled:opacity-50"
-            >
-              {isReloadingEvents ? "Loading..." : "Refresh Events"}
-            </button>
-          </div>
-          <div className="flex flex-wrap justify-center gap-2">
-            {EVENT_TYPES.map(type => (
+        <section className="mt-10 rounded-[1.75rem] border border-[#d7e5f1] bg-white/70 px-6 py-6 shadow-[0_14px_34px_rgba(30,53,79,0.06)] backdrop-blur-sm md:px-8">
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            {EVENT_TYPES.map((type) => (
               <button
                 key={type}
                 onClick={() => setSelectedEventType(type)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition duration-200 ${
+                className={`rounded-full px-4 py-2 text-sm font-medium transition duration-200 ${
                   selectedEventType === type
                     ? "bg-[#149a8e] text-white shadow-[0_10px_18px_rgba(20,154,142,0.22)]"
                     : "bg-white text-[#5a6f86] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5fbff]"
@@ -376,28 +397,53 @@ function DashboardPage() {
               </button>
             ))}
           </div>
-        </div>
-        <div className="mb-8 flex justify-center gap-2">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition duration-200 ${
-              viewMode === "grid"
-                ? "bg-[#0e8f84] text-white shadow-[0_10px_18px_rgba(14,143,132,0.22)]"
-                : "bg-white text-[#1f3149] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5fbff]"
-            }`}
-          >
-            Grid View
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition duration-200 ${
-              viewMode === "list"
-                ? "bg-[#0e8f84] text-white shadow-[0_10px_18px_rgba(14,143,132,0.22)]"
-                : "bg-white text-[#1f3149] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5fbff]"
-            }`}
-          >
-            List View
-          </button>
+        </section>
+
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
+            <button
+              onClick={() => setEventStatus("upcoming")}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition duration-200 ${
+                eventStatus === "upcoming"
+                  ? "bg-[#0e8f84] text-white shadow-[0_10px_18px_rgba(14,143,132,0.22)]"
+                  : "bg-white text-[#1f3149] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5fbff]"
+              }`}
+            >
+              Upcoming Events
+            </button>
+            <button
+              onClick={() => setEventStatus("past")}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition duration-200 ${
+                eventStatus === "past"
+                  ? "bg-[#0e8f84] text-white shadow-[0_10px_18px_rgba(14,143,132,0.22)]"
+                  : "bg-white text-[#1f3149] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5fbff]"
+              }`}
+            >
+              Past Events
+            </button>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2 lg:justify-end">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition duration-200 ${
+                viewMode === "grid"
+                  ? "bg-[#0e8f84] text-white shadow-[0_10px_18px_rgba(14,143,132,0.22)]"
+                  : "bg-white text-[#1f3149] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5fbff]"
+              }`}
+            >
+              Grid View
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition duration-200 ${
+                viewMode === "list"
+                  ? "bg-[#0e8f84] text-white shadow-[0_10px_18px_rgba(14,143,132,0.22)]"
+                  : "bg-white text-[#1f3149] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5fbff]"
+              }`}
+            >
+              List View
+            </button>
+          </div>
         </div>
 
         {filteredEvents.length === 0 ? (
@@ -438,14 +484,16 @@ function DashboardPage() {
                   </div>
                   <button
                     onClick={() => handleRegisterClick(event)}
-                    disabled={registeredEventIdSet.has(Number(event.id))}
+                    disabled={registeredEventIdSet.has(Number(event.id)) || isEventPast(event.date)}
                     className={`mt-5 w-full rounded-full py-2.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(14,143,132,0.2)] transition ${
                       registeredEventIdSet.has(Number(event.id))
                         ? "cursor-not-allowed bg-[#7ba8a3]"
+                        : isEventPast(event.date)
+                        ? "cursor-not-allowed bg-[#9ca3a8]"
                         : "bg-[#0e8f84] hover:bg-[#0d7a6e]"
                     }`}
                   >
-                    {registeredEventIdSet.has(Number(event.id)) ? "Registered" : "Register"}
+                        {registeredEventIdSet.has(Number(event.id)) ? "Registered" : isEventPast(event.date) ? "Event Wrapped Up" : "Register"}
                   </button>
                 </div>
               </div>
@@ -482,14 +530,16 @@ function DashboardPage() {
                   </div>
                   <button
                     onClick={() => handleRegisterClick(event)}
-                    disabled={registeredEventIdSet.has(Number(event.id))}
+                    disabled={registeredEventIdSet.has(Number(event.id)) || isEventPast(event.date)}
                     className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(14,143,132,0.2)] transition ${
                       registeredEventIdSet.has(Number(event.id))
                         ? "cursor-not-allowed bg-[#7ba8a3]"
+                        : isEventPast(event.date)
+                        ? "cursor-not-allowed bg-[#9ca3a8]"
                         : "bg-[#0e8f84] hover:bg-[#0d7a6e]"
                     }`}
                   >
-                    {registeredEventIdSet.has(Number(event.id)) ? "Registered" : "Register"}
+                        {registeredEventIdSet.has(Number(event.id)) ? "Registered" : isEventPast(event.date) ? "Event Wrapped Up" : "Register"}
                   </button>
                 </div>
               </div>
