@@ -6,6 +6,7 @@ const API_BASE = `http://${API_HOST}:4000/api`;
 const DEPARTMENTS = ["All", "CSE", "Civil", "MBA", "Agriculture"];
 const EVENT_TYPES = ["All", "Coding", "Marketing", "Public Speaking", "Cultural", "Workshop", "Seminar"];
 const EXTRA_PROFILE_KEY = "cc_profile_extra";
+const SETTINGS_KEY = "cc_user_settings";
 
 function getFallbackEventImage() {
   return "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80";
@@ -14,6 +15,15 @@ function getFallbackEventImage() {
 function readExtraProfile() {
   try {
     const raw = localStorage.getItem(EXTRA_PROFILE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function readSavedSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch (_error) {
     return {};
@@ -35,9 +45,10 @@ function DashboardPage() {
   const [myRegistrations, setMyRegistrations] = useState([]);
   const [isReloadingEvents, setIsReloadingEvents] = useState(false);
   const [isLoadingMyRegistrations, setIsLoadingMyRegistrations] = useState(false);
-  const [selectedDept, setSelectedDept] = useState("All");
+  const savedSettings = useMemo(() => readSavedSettings(), []);
+  const [selectedDept, setSelectedDept] = useState(savedSettings?.eventBehavior?.defaultDepartment || "All");
   const [selectedEventType, setSelectedEventType] = useState("All");
-  const [viewMode, setViewMode] = useState("grid");
+  const [viewMode, setViewMode] = useState(savedSettings?.eventBehavior?.defaultViewMode || "grid");
   const [eventStatus, setEventStatus] = useState("upcoming");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
