@@ -13,10 +13,20 @@ pool.on("error", (err) => {
   console.error("Unexpected connection pool error:", err);
 });
 
+// Convert SQL with '?' placeholders to Postgres-style $1, $2, ...
+function toPostgresPlaceholders(sql) {
+  let index = 0;
+  return sql.replace(/\?/g, () => {
+    index += 1;
+    return `$${index}`;
+  });
+}
+
 // Helper function to run database queries (INSERT, UPDATE, DELETE)
 async function run(sql, params = []) {
   try {
-    const result = await pool.query(sql, params);
+    const pgSql = toPostgresPlaceholders(sql);
+    const result = await pool.query(pgSql, params);
     return {
       lastID: result.rows[0]?.id,
       changes: result.rowCount
@@ -29,7 +39,8 @@ async function run(sql, params = []) {
 // Helper function to get a single row
 async function get(sql, params = []) {
   try {
-    const result = await pool.query(sql, params);
+    const pgSql = toPostgresPlaceholders(sql);
+    const result = await pool.query(pgSql, params);
     return result.rows[0] || null;
   } catch (error) {
     throw error;
@@ -39,7 +50,8 @@ async function get(sql, params = []) {
 // Helper function to get all rows
 async function all(sql, params = []) {
   try {
-    const result = await pool.query(sql, params);
+    const pgSql = toPostgresPlaceholders(sql);
+    const result = await pool.query(pgSql, params);
     return result.rows || [];
   } catch (error) {
     throw error;
