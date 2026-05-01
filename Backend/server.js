@@ -7,6 +7,11 @@ const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
 const crypto = require("crypto");
 const path = require("path");
+const dotenv = require("dotenv");
+
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
+dotenv.config();
+
 const { Resend } = require("resend");
 const { pool, run, get, all, close } = require("./db");
 const { initializeDatabase } = require("./init-db");
@@ -1351,6 +1356,9 @@ app.post("/api/auth/signin", authLimiter, async (req, res) => {
     });
   } catch (error) {
     console.error("Sign-in error:", error);
+    if (process.env.NODE_ENV === 'development') {
+      return res.status(500).json({ message: 'Could not sign in right now.', error: String(error && error.message), stack: String(error && error.stack) });
+    }
     return jsonError(res, 500, "Could not sign in right now.");
   }
 });

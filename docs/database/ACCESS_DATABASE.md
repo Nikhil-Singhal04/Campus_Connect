@@ -7,7 +7,7 @@ Files and credentials
 
 Quick overview
 - Database service name (Docker): `postgres` (container `campus_connect_db`)
-- Local host port: `5432`
+- Local host port: `5433` by default
 - Default database: `campus_connect`
 
 1) Using Docker (recommended when you don't have a local psql client)
@@ -27,7 +27,7 @@ docker exec -i campus_connect_db psql -U postgres -d campus_connect -c "SELECT c
 - Install `psql` (Postgres client) for your OS, then run:
 
 ```bash
-psql -h localhost -p 5432 -U postgres -d campus_connect
+psql -h localhost -p 5433 -U postgres -d campus_connect
 # enter the password from .env when prompted
 ```
 
@@ -37,7 +37,7 @@ psql -h localhost -p 5432 -U postgres -d campus_connect
 ```
 postgres://DB_USER:DB_PASSWORD@DB_HOST:DB_PORT/DB_NAME
 # example:
-postgres://postgres:secure_db_password_123@localhost:5432/campus_connect
+postgres://postgres:secure_db_password_123@localhost:5433/campus_connect
 ```
 
 4) From Node.js (example using `pg`)
@@ -98,7 +98,7 @@ docker-compose logs -f postgres
 docker-compose restart postgres
 ```
 
-- If port 5432 is used by another process, change `DB_PORT` in `.env` and `docker-compose.yml`.
+- If port 5433 is used by another process, change `POSTGRES_HOST_PORT` in `.env` or `docker-compose.yml`.
 
 8) Security & notes
 - Do not commit `.env` to git. `.env` contains secrets.

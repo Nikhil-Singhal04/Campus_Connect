@@ -54,7 +54,8 @@ docker-compose down
 ```env
 # Database Connection
 DB_HOST=postgres          # Docker service name
-DB_PORT=5432             # PostgreSQL default port
+DB_PORT=5432             # PostgreSQL container port
+POSTGRES_HOST_PORT=5433   # Host port exposed by Docker Compose
 DB_NAME=campus_connect   # Database name
 DB_USER=postgres         # Admin user
 DB_PASSWORD=your_password # Keep secure!

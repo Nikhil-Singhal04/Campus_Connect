@@ -12,21 +12,11 @@ const pool = new Pool({
 pool.on("error", (err) => {
   console.error("Unexpected connection pool error:", err);
 });
-
-// Convert SQL with '?' placeholders to Postgres-style $1, $2, ...
-function toPostgresPlaceholders(sql) {
-  let index = 0;
-  return sql.replace(/\?/g, () => {
-    index += 1;
-    return `$${index}`;
-  });
-}
-
 // Helper function to run database queries (INSERT, UPDATE, DELETE)
 async function run(sql, params = []) {
   try {
-    const pgSql = toPostgresPlaceholders(sql);
-    const result = await pool.query(pgSql, params);
+    const { text, values } = convertPlaceholders(sql, params);
+    const result = await pool.query(text, values);
     return {
       lastID: result.rows[0]?.id,
       changes: result.rowCount
@@ -39,8 +29,8 @@ async function run(sql, params = []) {
 // Helper function to get a single row
 async function get(sql, params = []) {
   try {
-    const pgSql = toPostgresPlaceholders(sql);
-    const result = await pool.query(pgSql, params);
+    const { text, values } = convertPlaceholders(sql, params);
+    const result = await pool.query(text, values);
     return result.rows[0] || null;
   } catch (error) {
     throw error;
@@ -50,8 +40,8 @@ async function get(sql, params = []) {
 // Helper function to get all rows
 async function all(sql, params = []) {
   try {
-    const pgSql = toPostgresPlaceholders(sql);
-    const result = await pool.query(pgSql, params);
+    const { text, values } = convertPlaceholders(sql, params);
+    const result = await pool.query(text, values);
     return result.rows || [];
   } catch (error) {
     throw error;
@@ -70,3 +60,18 @@ module.exports = {
   all,
   close
 };
+
+function convertPlaceholders(sql, params) {
+  // If no params or no '?' present, return as-is for performance
+  if (!params || params.length === 0 || sql.indexOf('?') === -1) {
+    return { text: sql, values: params };
+  }
+
+  let idx = 0;
+  const text = sql.replace(/\?/g, () => {
+    idx += 1;
+    return `$${idx}`;
+  });
+
+  return { text, values: params };
+}
