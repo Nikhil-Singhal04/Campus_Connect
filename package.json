@@ -1,0 +1,10 @@
+{
+  "name": "campus-connect",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "powershell -ExecutionPolicy Bypass -File ./run-backend-final.ps1",
+    "start:background": "docker-compose up -d && echo Backend started in background at http://localhost:4000",
+    "stop": "docker-compose down"
+  }
+}
