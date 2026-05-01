@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_password}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -50,9 +50,6 @@ services:
       RESEND_AUDIENCE_NAME: ${RESEND_AUDIENCE_NAME:-Campus Connect}
     ports:
       - "${PORT:-4000}:4000"
-    volumes:
-      - ./Backend:/app
-      - /app/node_modules
     networks:
       - campus_connect_network
 

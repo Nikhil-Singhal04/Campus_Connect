@@ -27,6 +27,7 @@ FRONTEND_ORIGIN=http://127.0.0.1:5500,http://localhost:5500
 # Database (PostgreSQL)
 DB_HOST=postgres
 DB_PORT=5432
+POSTGRES_HOST_PORT=5433
 DB_NAME=campus_connect
 DB_USER=postgres
 DB_PASSWORD=your_secure_password_here
