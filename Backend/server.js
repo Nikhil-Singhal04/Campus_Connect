@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
@@ -8,7 +10,6 @@ const path = require("path");
 const { Resend } = require("resend");
 const { pool, run, get, all, close } = require("./db");
 const { initializeDatabase } = require("./init-db");
-require("dotenv").config();
 
 const {
   PORT = 4000,
