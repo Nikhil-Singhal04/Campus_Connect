@@ -1,10 +1,14 @@
 {
-  "name": "campus-connect",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "start": "powershell -ExecutionPolicy Bypass -File ./run-backend-final.ps1",
-    "start:background": "docker-compose up -d && echo Backend started in background at http://localhost:4000",
-    "stop": "docker-compose down"
-  }
+    "private":  true,
+    "name":  "campus-connect",
+    "version":  "1.0.0",
+    "scripts":  {
+                    "logs:db":  "docker logs -f campus_connect_db",
+                    "logs":  "docker logs -f campus_connect_backend",
+                    "stop":  "docker-compose down",
+                    "start:background":  "docker-compose up -d",
+                    "start:windows":  "powershell -ExecutionPolicy Bypass -File ./run-backend-final.ps1",
+                    "start":  "docker-compose up",
+                    "start:unix":  "bash ./run-backend-final.sh"
+                }
 }
