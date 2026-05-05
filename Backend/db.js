@@ -12,6 +12,23 @@ const pool = new Pool({
 pool.on("error", (err) => {
   console.error("Unexpected connection pool error:", err);
 });
+
+// Convert SQLite placeholders (?) to PostgreSQL placeholders ($1, $2, etc.)
+function convertPlaceholders(sql, params) {
+  // If no params or no '?' present, return as-is for performance
+  if (!params || params.length === 0 || sql.indexOf('?') === -1) {
+    return { text: sql, values: params };
+  }
+
+  let idx = 0;
+  const text = sql.replace(/\?/g, () => {
+    idx += 1;
+    return `$${idx}`;
+  });
+
+  return { text, values: params };
+}
+
 // Helper function to run database queries (INSERT, UPDATE, DELETE)
 async function run(sql, params = []) {
   try {
@@ -60,18 +77,3 @@ module.exports = {
   all,
   close
 };
-
-function convertPlaceholders(sql, params) {
-  // If no params or no '?' present, return as-is for performance
-  if (!params || params.length === 0 || sql.indexOf('?') === -1) {
-    return { text: sql, values: params };
-  }
-
-  let idx = 0;
-  const text = sql.replace(/\?/g, () => {
-    idx += 1;
-    return `$${idx}`;
-  });
-
-  return { text, values: params };
-}
