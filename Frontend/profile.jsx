@@ -4,6 +4,10 @@ const API_HOST = window.location.hostname || "127.0.0.1";
 const API_BASE = `http://${API_HOST}:4000/api`;
 const EXTRA_PROFILE_KEY = "cc_profile_extra";
 
+function getThemeState() {
+  return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
+}
+
 function readExtraProfile() {
   try {
     const raw = localStorage.getItem(EXTRA_PROFILE_KEY);
@@ -29,6 +33,7 @@ function getInitialProfileForm() {
 }
 
 function ProfilePage() {
+  const { isDark } = getThemeState();
   const token = localStorage.getItem("cc_token");
   const [user, setUser] = useState(() => {
     const rawUser = localStorage.getItem("cc_user");
@@ -385,8 +390,8 @@ function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f7fbff_0%,#eef6ff_36%,#e9f4ff_100%)] p-3 md:p-6">
-        <div className="mx-auto max-w-[1100px] px-5 py-8 text-[#5a6f86] md:px-8">
+      <div className={`min-h-screen p-3 md:p-6 ${isDark ? "bg-[radial-gradient(circle_at_top_left,#09111b_0%,#0f1724_36%,#111d2d_100%)] text-[#e8eef7]" : "bg-[radial-gradient(circle_at_top_left,#f7fbff_0%,#eef6ff_36%,#e9f4ff_100%)]"}`}>
+        <div className={`mx-auto max-w-[1100px] px-5 py-8 md:px-8 ${isDark ? "text-[#d9e6f4]" : "text-[#5a6f86]"}`}>
           Loading profile...
         </div>
       </div>
@@ -394,8 +399,8 @@ function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f7fbff_0%,#eef6ff_36%,#e9f4ff_100%)] text-[#1f3149]">
-      <header className="relative w-full overflow-hidden border-b border-[#d7e5f1] bg-[linear-gradient(120deg,#f8fcff_0%,#eef9f8_48%,#e8f6ff_100%)] shadow-[0_16px_40px_rgba(30,53,79,0.1)]">
+    <div className={`min-h-screen ${isDark ? "bg-[radial-gradient(circle_at_top_left,#09111b_0%,#0f1724_36%,#111d2d_100%)] text-[#e8eef7]" : "bg-[radial-gradient(circle_at_top_left,#f7fbff_0%,#eef6ff_36%,#e9f4ff_100%)] text-[#1f3149]"}`}>
+      <header className={`relative w-full overflow-hidden border-b shadow-[0_16px_40px_rgba(30,53,79,0.1)] ${isDark ? "border-white/10 bg-[linear-gradient(120deg,#10192a_0%,#0f1724_48%,#101a2d_100%)] shadow-[0_16px_40px_rgba(0,0,0,0.24)]" : "border-[#d7e5f1] bg-[linear-gradient(120deg,#f8fcff_0%,#eef9f8_48%,#e8f6ff_100%)]"}`}>
         <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-[#3cd4c533] blur-2xl" />
         <div className="pointer-events-none absolute -right-12 top-4 h-44 w-44 rounded-full bg-[#36a3ff26] blur-2xl" />
 
@@ -408,7 +413,7 @@ function ProfilePage() {
             <button
               type="button"
               onClick={handleBackToDashboard}
-              className="rounded-full border border-[#bdd4e7] bg-white/90 px-4 py-2 text-sm font-semibold text-[#1f3147] transition hover:-translate-y-0.5 hover:border-[#8db5d8]"
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${isDark ? "border-white/10 bg-white/5 text-[#eef4fb] hover:border-white/20" : "border-[#bdd4e7] bg-white/90 text-[#1f3147] hover:border-[#8db5d8]"}`}
             >
               Dashboard
             </button>
@@ -430,21 +435,21 @@ function ProfilePage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-[1100px] px-4 py-3 md:px-6 md:py-4 animate-fadeUp">
+      <div className={`mx-auto max-w-[1100px] px-4 py-3 md:px-6 md:py-4 animate-fadeUp ${isDark ? "text-[#e8eef7]" : ""}`}>
 
         {saveMessage && (
-          <p className="mt-4 rounded-xl border border-[#d6e7f4] bg-white/85 px-4 py-3 text-sm text-[#39506b] shadow-[0_8px_18px_rgba(30,53,79,0.08)]">
+          <p className={`mt-4 rounded-xl border px-4 py-3 text-sm shadow-[0_8px_18px_rgba(30,53,79,0.08)] ${isDark ? "border-white/10 bg-[#0f1724]/95 text-[#d9e6f4] shadow-[0_8px_18px_rgba(0,0,0,0.24)]" : "border-[#d6e7f4] bg-white/85 text-[#39506b]"}`}>
             {saveMessage}
           </p>
         )}
 
         <main className="mt-3 flex flex-col gap-6">
-          <section className="rounded-[1.5rem] border border-[#d7e5f1] bg-white/85 px-5 py-6 shadow-[0_14px_30px_rgba(30,53,79,0.08)] backdrop-blur-sm md:px-6">
-            <div className="flex flex-col items-center border-b border-[#e6eef6] pb-6 text-center">
+          <section className={`rounded-[1.5rem] border px-5 py-6 shadow-[0_14px_30px_rgba(30,53,79,0.08)] backdrop-blur-sm md:px-6 ${isDark ? "border-white/10 bg-[#0f1724]/95 shadow-[0_14px_30px_rgba(0,0,0,0.24)]" : "border-[#d7e5f1] bg-white/85"}`}>
+            <div className={`flex flex-col items-center border-b pb-6 text-center ${isDark ? "border-white/10" : "border-[#e6eef6]"}`}>
               <div className="w-full text-left">
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-[#0f8f83]">Campus Connect</p>
-                <h1 className="mt-1 font-display text-2xl font-extrabold text-[#14273d] md:text-[2.15rem]">Profile Hub</h1>
-                <p className="mt-1 text-xs text-[#587189] md:text-sm">Manage your details, academics, and interests</p>
+                <h1 className={`mt-1 font-display text-2xl font-extrabold md:text-[2.15rem] ${isDark ? "text-[#eef4fb]" : "text-[#14273d]"}`}>Profile Hub</h1>
+                <p className={`mt-1 text-xs md:text-sm ${isDark ? "text-[#aebfd3]" : "text-[#587189]"}`}>Manage your details, academics, and interests</p>
               </div>
               <div className="my-4 h-px w-full bg-[#e6eef6]" />
               <div className="relative mb-4 mt-4">
@@ -478,8 +483,8 @@ function ProfilePage() {
                 />
               </div>
               <div>
-                <h2 className="font-display text-3xl font-bold text-[#16263a]">{displayName}</h2>
-                <p className="mt-1 text-sm text-[#5f748a]">{profileForm.email || "No email available"}</p>
+                <h2 className={`font-display text-3xl font-bold ${isDark ? "text-[#eef4fb]" : "text-[#16263a]"}`}>{displayName}</h2>
+                <p className={`mt-1 text-sm ${isDark ? "text-[#aebfd3]" : "text-[#5f748a]"}`}>{profileForm.email || "No email available"}</p>
               </div>
             </div>
 

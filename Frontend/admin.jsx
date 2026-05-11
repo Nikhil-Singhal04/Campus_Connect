@@ -3,6 +3,10 @@ const { useEffect, useMemo, useState } = React;
 const API_HOST = window.location.hostname || "127.0.0.1";
 const API_BASE = `http://${API_HOST}:4000/api`;
 
+function getThemeState() {
+  return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
+}
+
 function formatDate(timestamp) {
   if (!timestamp) return "-";
   const dt = new Date(Number(timestamp));
@@ -95,6 +99,7 @@ function StatCard({ label, value, tone = "blue" }) {
 }
 
 function LoginPage({ onLogin, isLoading, error }) {
+  const { isDark } = getThemeState();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState("");
@@ -117,11 +122,11 @@ function LoginPage({ onLogin, isLoading, error }) {
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,#f4fbff_0%,#eaf5ff_45%,#e7f4f2_100%)] p-4">
-      <div className="w-full max-w-md rounded-2xl border border-[#c9dbea] bg-white p-8 shadow-[0_20px_48px_rgba(17,42,61,0.12)]">
+    <div className={`flex h-screen items-center justify-center p-4 ${isDark ? "bg-[radial-gradient(circle_at_top_left,#09111b_0%,#0f1724_45%,#111d2d_100%)] text-[#e8eef7]" : "bg-[radial-gradient(circle_at_top_left,#f4fbff_0%,#eaf5ff_45%,#e7f4f2_100%)]"}`}>
+      <div className={`w-full max-w-md rounded-2xl border p-8 shadow-[0_20px_48px_rgba(17,42,61,0.12)] ${isDark ? "border-white/10 bg-[#0f1724]/95 shadow-[0_20px_48px_rgba(0,0,0,0.28)]" : "border-[#c9dbea] bg-white"}`}>
         <div className="mb-8 text-center">
-          <h1 className="font-display text-3xl font-bold text-[#132b3f]">Admin Portal</h1>
-          <p className="mt-2 text-sm text-[#52677f]">Secure administrator access</p>
+          <h1 className={`font-display text-3xl font-bold ${isDark ? "text-[#eef4fb]" : "text-[#132b3f]"}`}>Admin Portal</h1>
+          <p className={`mt-2 text-sm ${isDark ? "text-[#aebfd3]" : "text-[#52677f]"}`}>Secure administrator access</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
