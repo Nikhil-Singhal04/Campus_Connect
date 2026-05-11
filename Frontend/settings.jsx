@@ -1,7 +1,6 @@
 const { useEffect, useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
 const SETTINGS_KEY = "cc_user_settings";
 const DEPARTMENTS = ["All", "CSE", "Civil", "MBA", "Agriculture"];
 const NAV_ITEMS = [
@@ -113,18 +112,8 @@ function SettingsPage() {
 
     async function loadProfile() {
       try {
-        const response = await fetch(`${API_BASE}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error("Unauthorized");
-        }
-
-        const data = await response.json();
-        const normalizedType = String(data?.user?.accountType || "").toLowerCase();
+        const userData = await campusAPI.getMe();
+        const normalizedType = String(userData?.accountType || "").toLowerCase();
 
         if (normalizedType === "organizer") {
           window.location.href = "organiser.html";
@@ -132,7 +121,7 @@ function SettingsPage() {
         }
 
         if (mounted) {
-          const nextUser = data.user || {};
+          const nextUser = userData || {};
           setUser(nextUser);
           localStorage.setItem("cc_user", JSON.stringify(nextUser));
         }
@@ -154,7 +143,7 @@ function SettingsPage() {
   }, [token]);
 
   useEffect(() => {
-    document.documentElement.dataset.ccTheme = settings.appearance.theme;
+    window.CampusConnectTheme?.applyThemePreference?.(settings.appearance.theme);
     document.documentElement.dataset.ccSpacing = settings.appearance.spacing;
     document.documentElement.dataset.ccReduceMotion = settings.accessibility.reduceMotion ? "true" : "false";
     document.documentElement.dataset.ccHighContrast = settings.accessibility.highContrast ? "true" : "false";
