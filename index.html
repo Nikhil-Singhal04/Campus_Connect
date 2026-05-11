@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Connect | Home</title>
+  <meta name="description" content="Campus Connect landing page." />
+  <base href="/Frontend/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="icon" type="image/svg+xml" href="campus-connect-logo.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ["Space Grotesk", "sans-serif"],
+            body: ["Manrope", "sans-serif"]
+          },
+          animation: {
+            fadeUp: "fadeUp .75s ease forwards",
+            riseSoft: "riseSoft .55s ease forwards",
+            floatSlow: "floatSlow 7s ease-in-out infinite",
+            glowPulse: "glowPulse 2.8s ease-in-out infinite",
+            driftX: "driftX 12s ease-in-out infinite",
+            zoomSlow: "zoomSlow 16s ease-in-out infinite"
+          },
+          keyframes: {
+            fadeUp: {
+              "0%": { opacity: "0", transform: "translateY(16px)" },
+              "100%": { opacity: "1", transform: "translateY(0)" }
+            },
+            riseSoft: {
+              "0%": { opacity: "0", transform: "translateY(14px)" },
+              "100%": { opacity: "1", transform: "translateY(0)" }
+            },
+            floatSlow: {
+              "0%,100%": { transform: "translateY(0px)" },
+              "50%": { transform: "translateY(-12px)" }
+            },
+            glowPulse: {
+              "0%,100%": { opacity: "0.38", transform: "scale(1)" },
+              "50%": { opacity: "0.7", transform: "scale(1.07)" }
+            },
+            driftX: {
+              "0%,100%": { transform: "translateX(0px)" },
+              "50%": { transform: "translateX(20px)" }
+            },
+            zoomSlow: {
+              "0%,100%": { transform: "scale(1)" },
+              "50%": { transform: "scale(1.06)" }
+            }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="font-body text-[#f3f7ff] antialiased">
+  <div id="root"></div>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

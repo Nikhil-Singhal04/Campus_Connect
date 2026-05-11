@@ -101,7 +101,12 @@ function OrganizerDashboardPage() {
         const data = await response.json();
 
         if (mounted && Array.isArray(data.events)) {
-          setEvents(data.events);
+          setEvents(
+            data.events.map((event) => ({
+              ...event,
+              approvalStatus: String(event?.approvalStatus || event?.approvalstatus || "Pending").trim() || "Pending"
+            }))
+          );
         }
       } catch (_error) {
         console.error("Load events error:", _error);
@@ -113,8 +118,32 @@ function OrganizerDashboardPage() {
     }
 
     loadEvents();
+    const handleWindowFocus = () => {
+      if (mounted) {
+        loadEvents();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (mounted && document.visibilityState === "visible") {
+        loadEvents();
+      }
+    };
+
+    const refreshTimer = window.setInterval(() => {
+      if (mounted) {
+        loadEvents();
+      }
+    }, 15000);
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       mounted = false;
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.clearInterval(refreshTimer);
     };
   }, [token]);
 
