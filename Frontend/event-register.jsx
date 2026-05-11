@@ -1,7 +1,10 @@
 const { useEffect, useMemo, useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
+
+function getThemeState() {
+  return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
+}
 
 function getFallbackEventImage() {
   return "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80";
@@ -37,6 +40,7 @@ function createEmptyMember() {
 }
 
 function EventRegistrationPage() {
+  const { isDark } = getThemeState();
   const token = localStorage.getItem("cc_token");
   const [eventData, setEventData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,22 +104,7 @@ function EventRegistrationPage() {
           return;
         }
 
-        const response = await fetch(`${API_BASE}/events`, { cache: "no-store" });
-        if (response.status === 304) {
-          if (selectedEvent) {
-            if (mounted) {
-              setEventData(selectedEvent);
-              setIsLoading(false);
-            }
-            return;
-          }
-          throw new Error("Events list not modified");
-        }
-        if (!response.ok) {
-          throw new Error(`Failed to load events (${response.status})`);
-        }
-        const payload = await response.json().catch(() => ({ events: [] }));
-        const events = Array.isArray(payload.events) ? payload.events : [];
+        const events = await campusAPI.listEvents();
         const matchedEvent = events.find((item) => String(item.id) === String(queryId));
 
         if (!matchedEvent) {
@@ -152,7 +141,7 @@ function EventRegistrationPage() {
       if (!eventData?.id) return;
 
       try {
-        const response = await fetch(`${API_BASE}/me/registrations`, {
+        const response = await fetch(`${PAGE_API_BASE}/me/registrations`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -268,7 +257,7 @@ function EventRegistrationPage() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(`${API_BASE}/events/${eventData.id}/register`, {
+      const response = await fetch(`${PAGE_API_BASE}/events/${eventData.id}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -349,7 +338,7 @@ function EventRegistrationPage() {
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="animate-fadeUp overflow-hidden rounded-[1.8rem] border border-[#d6e4f0] bg-white shadow-[0_16px_36px_rgba(30,53,79,0.08)]">
+        <section className={`animate-fadeUp overflow-hidden rounded-[1.8rem] border shadow-[0_16px_36px_rgba(30,53,79,0.08)] ${isDark ? "border-white/10 bg-[#0f1724]/95 shadow-[0_16px_36px_rgba(0,0,0,0.24)]" : "border-[#d6e4f0] bg-white"}`}>
           <img
             src={eventData.posterImage || eventData.image || getFallbackEventImage()}
             alt={eventData.title}
@@ -371,18 +360,18 @@ function EventRegistrationPage() {
                 {pricingLabel}
               </span>
             </div>
-            <h1 className="mt-4 font-display text-3xl font-semibold text-[#142538] md:text-4xl">{eventData.title}</h1>
-            <p className="mt-3 text-[#516880]">{eventData.description}</p>
+            <h1 className={`mt-4 font-display text-3xl font-semibold md:text-4xl ${isDark ? "text-[#eef4fb]" : "text-[#142538]"}`}>{eventData.title}</h1>
+            <p className={`mt-3 ${isDark ? "text-[#aebfd3]" : "text-[#516880]"}`}>{eventData.description}</p>
 
-            <div className="mt-6 grid grid-cols-1 gap-3 text-sm text-[#4d637a] sm:grid-cols-2">
-              <p className="rounded-xl border border-[#e2ebf4] bg-[#f9fcff] px-3 py-2">Date: {eventData.date}</p>
-              <p className="rounded-xl border border-[#e2ebf4] bg-[#f9fcff] px-3 py-2">Time: {eventData.time}</p>
-              <p className="rounded-xl border border-[#e2ebf4] bg-[#f9fcff] px-3 py-2 sm:col-span-2">Venue: {eventData.location}</p>
+            <div className={`mt-6 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 ${isDark ? "text-[#d9e6f4]" : "text-[#4d637a]"}`}>
+              <p className={`rounded-xl border px-3 py-2 ${isDark ? "border-white/10 bg-white/5" : "border-[#e2ebf4] bg-[#f9fcff]"}`}>Date: {eventData.date}</p>
+              <p className={`rounded-xl border px-3 py-2 ${isDark ? "border-white/10 bg-white/5" : "border-[#e2ebf4] bg-[#f9fcff]"}`}>Time: {eventData.time}</p>
+              <p className={`rounded-xl border px-3 py-2 sm:col-span-2 ${isDark ? "border-white/10 bg-white/5" : "border-[#e2ebf4] bg-[#f9fcff]"}`}>Venue: {eventData.location}</p>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-[#d8e6f2] bg-[linear-gradient(135deg,#f5fbff,#ebf6ff)] p-4">
-              <h2 className="font-display text-lg font-semibold text-[#193148]">Pricing & Inclusions</h2>
-              <ul className="mt-3 space-y-2 text-sm text-[#4d637a]">
+            <div className={`mt-6 rounded-2xl border p-4 ${isDark ? "border-white/10 bg-white/5" : "border-[#d8e6f2] bg-[linear-gradient(135deg,#f5fbff,#ebf6ff)]"}`}>
+              <h2 className={`font-display text-lg font-semibold ${isDark ? "text-[#eef4fb]" : "text-[#193148]"}`}>Pricing & Inclusions</h2>
+              <ul className={`mt-3 space-y-2 text-sm ${isDark ? "text-[#d9e6f4]" : "text-[#4d637a]"}`}>
                 <li>Registration: {pricingLabel}</li>
                 <li>Access: Full event participation and session access.</li>
                 <li>Perks: Digital participation confirmation after successful registration.</li>
@@ -391,9 +380,9 @@ function EventRegistrationPage() {
           </div>
         </section>
 
-        <section className="animate-fadeUp rounded-[1.8rem] border border-[#d6e4f0] bg-white p-6 shadow-[0_16px_36px_rgba(30,53,79,0.08)] md:p-7">
-          <h2 className="font-display text-2xl font-semibold text-[#142538]">Complete Your Registration</h2>
-          <p className="mt-1 text-sm text-[#5a6f86]">Fill in your details to reserve your seat for this event.</p>
+        <section className={`animate-fadeUp rounded-[1.8rem] border p-6 shadow-[0_16px_36px_rgba(30,53,79,0.08)] md:p-7 ${isDark ? "border-white/10 bg-[#0f1724]/95 shadow-[0_16px_36px_rgba(0,0,0,0.24)]" : "border-[#d6e4f0] bg-white"}`}>
+          <h2 className={`font-display text-2xl font-semibold ${isDark ? "text-[#eef4fb]" : "text-[#142538]"}`}>Complete Your Registration</h2>
+          <p className={`mt-1 text-sm ${isDark ? "text-[#aebfd3]" : "text-[#5a6f86]"}`}>Fill in your details to reserve your seat for this event.</p>
 
           <form onSubmit={handleSubmit} className="mt-5 space-y-3">
             <label className="block text-sm text-[#24344a]">
