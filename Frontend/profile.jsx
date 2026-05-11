@@ -1,7 +1,6 @@
 const { useEffect, useRef, useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
 const EXTRA_PROFILE_KEY = "cc_profile_extra";
 
 function getThemeState() {
@@ -64,18 +63,8 @@ function ProfilePage() {
 
     async function loadProfile() {
       try {
-        const response = await fetch(`${API_BASE}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error("Unauthorized");
-        }
-
-        const data = await response.json();
-        const normalizedType = String(data?.user?.accountType || "").toLowerCase();
+        const userData = await campusAPI.getMe();
+        const normalizedType = String(userData?.accountType || "").toLowerCase();
 
         if (normalizedType === "organizer") {
           window.location.href = "organiser.html";
@@ -83,8 +72,8 @@ function ProfilePage() {
         }
 
         if (mounted) {
-          setUser(data.user || {});
-          localStorage.setItem("cc_user", JSON.stringify(data.user || {}));
+          setUser(userData || {});
+          localStorage.setItem("cc_user", JSON.stringify(userData || {}));
         }
       } catch (_error) {
         localStorage.removeItem("cc_token");
@@ -125,7 +114,7 @@ function ProfilePage() {
     async function loadMyRegistrations() {
       try {
         setIsLoadingRegistrations(true);
-        const response = await fetch(`${API_BASE}/me/registrations`, {
+        const response = await fetch(`${PAGE_API_BASE}/me/registrations`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

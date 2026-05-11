@@ -1,7 +1,6 @@
 const { useEffect, useMemo, useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
 
 function getThemeState() {
   return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
@@ -53,7 +52,7 @@ function OrganizerDashboardPage() {
 
     async function loadProfile() {
       try {
-        const response = await fetch(`${API_BASE}/auth/me`, {
+        const response = await fetch(`${PAGE_API_BASE}/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -98,7 +97,7 @@ function OrganizerDashboardPage() {
     async function loadEvents() {
       try {
         setIsLoadingEvents(true);
-        const response = await fetch(`${API_BASE}/organizer/events`, {
+        const response = await fetch(`${PAGE_API_BASE}/organizer/events`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -192,7 +191,7 @@ function OrganizerDashboardPage() {
       setMessage({ type: "idle", text: "" });
 
       const isEditing = Number.isInteger(editingEventId);
-      const endpoint = isEditing ? `${API_BASE}/organizer/events/${editingEventId}` : `${API_BASE}/events`;
+      const endpoint = isEditing ? `${PAGE_API_BASE}/organizer/events/${editingEventId}` : `${PAGE_API_BASE}/events`;
       const method = isEditing ? "PATCH" : "POST";
 
       const response = await fetch(endpoint, {
@@ -238,7 +237,7 @@ function OrganizerDashboardPage() {
 
       setMessage({ type: "success", text: isEditing ? "Event updated successfully." : "Event created successfully." });
 
-      const reloadResponse = await fetch(`${API_BASE}/organizer/events`, {
+      const reloadResponse = await fetch(`${PAGE_API_BASE}/organizer/events`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -304,7 +303,7 @@ function OrganizerDashboardPage() {
 
     try {
       setLoadingRegistrationsFor(eventId);
-      const response = await fetch(`${API_BASE}/organizer/events/${eventId}/registrations`, {
+      const response = await fetch(`${PAGE_API_BASE}/organizer/events/${eventId}/registrations`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -336,7 +335,7 @@ function OrganizerDashboardPage() {
 
     try {
       setRequestingDeleteFor(eventId);
-      const response = await fetch(`${API_BASE}/organizer/events/${eventId}/delete-request`, {
+      const response = await fetch(`${PAGE_API_BASE}/organizer/events/${eventId}/delete-request`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -354,7 +353,7 @@ function OrganizerDashboardPage() {
       setMessage({ type: "success", text: data.message || "Deletion request sent for admin approval." });
       setDeleteReasonsByEvent((prev) => ({ ...prev, [eventId]: "" }));
 
-      const reloadResponse = await fetch(`${API_BASE}/organizer/events`, {
+      const reloadResponse = await fetch(`${PAGE_API_BASE}/organizer/events`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

@@ -1,7 +1,6 @@
 const { useEffect, useMemo, useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
 
 function getThemeState() {
   return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
@@ -115,9 +114,7 @@ function PaymentPage() {
       }
 
       try {
-        const response = await fetch(`${API_BASE}/events`);
-        const payload = await response.json().catch(() => ({ events: [] }));
-        const events = Array.isArray(payload.events) ? payload.events : [];
+        const events = await campusAPI.listEvents();
         const matched = events.find((item) => String(item.id) === String(eventId));
         const normalizedEvent = matched || selectedEvent || { id: eventId, title: parsedPending.eventTitle || "Selected Event" };
 
@@ -160,7 +157,7 @@ function PaymentPage() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(`${API_BASE}/events/${registrationEventId}/register`, {
+      const response = await fetch(`${PAGE_API_BASE}/events/${registrationEventId}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

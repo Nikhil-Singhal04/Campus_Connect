@@ -1,7 +1,6 @@
 const { useEffect, useMemo, useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
 
 function getThemeState() {
   return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
@@ -105,9 +104,7 @@ function EventRegistrationPage() {
           return;
         }
 
-        const response = await fetch(`${API_BASE}/events`);
-        const payload = await response.json().catch(() => ({ events: [] }));
-        const events = Array.isArray(payload.events) ? payload.events : [];
+        const events = await campusAPI.listEvents();
         const matchedEvent = events.find((item) => String(item.id) === String(queryId));
 
         if (!matchedEvent) {
@@ -144,7 +141,7 @@ function EventRegistrationPage() {
       if (!eventData?.id) return;
 
       try {
-        const response = await fetch(`${API_BASE}/me/registrations`, {
+        const response = await fetch(`${PAGE_API_BASE}/me/registrations`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -260,7 +257,7 @@ function EventRegistrationPage() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(`${API_BASE}/events/${eventData.id}/register`, {
+      const response = await fetch(`${PAGE_API_BASE}/events/${eventData.id}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
