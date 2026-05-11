@@ -114,18 +114,7 @@ function ProfilePage() {
     async function loadMyRegistrations() {
       try {
         setIsLoadingRegistrations(true);
-        const response = await fetch(`${PAGE_API_BASE}/me/registrations`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        const data = await response.json().catch(() => ({ registrations: [] }));
-        if (!response.ok) {
-          if (mounted) setMyRegistrations([]);
-          return;
-        }
-
+        const data = await campusAPI.getMyRegistrations();
         if (mounted) {
           setMyRegistrations(Array.isArray(data.registrations) ? data.registrations : []);
         }
