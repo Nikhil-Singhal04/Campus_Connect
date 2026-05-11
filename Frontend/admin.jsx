@@ -199,65 +199,34 @@ function AdminPortalPage({ token, onLogout }) {
     try {
       setIsBusy(true);
       setError("");
-
-      const [healthRes, usersRes, eventsRes, approvedEventsRes, pendingEventsRes, deletionRequestsRes, registrationsRes] = await Promise.all([
-        fetch(`${PAGE_API_BASE}/health`),
-        fetch(`${PAGE_API_BASE}/admin/users`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        }),
-        fetch(`${PAGE_API_BASE}/events`),
-        fetch(`${PAGE_API_BASE}/admin/events?status=Approved`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        }),
-        fetch(`${PAGE_API_BASE}/admin/events?status=Pending`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        }),
-        fetch(`${PAGE_API_BASE}/admin/events/deletion-requests`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        }),
-        fetch(`${PAGE_API_BASE}/admin/registrations?limit=120`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        })
+      const [healthData, usersData, eventsData, approvedEventsData, pendingData, deletionData, registrationsData] = await Promise.all([
+        campusAPI.health(),
+        campusAPI.getAdminUsers(),
+        campusAPI.listEvents(),
+        campusAPI.getAdminEvents("Approved"),
+        campusAPI.getAdminEvents("Pending"),
+        campusAPI.getDeletionRequests(),
+        campusAPI.getAdminRegistrations(120)
       ]);
 
-      const healthData = await healthRes.json().catch(() => ({ ok: false, service: "Unknown" }));
       setHealth(healthData || { ok: false, service: "Unknown" });
 
-      const eventsData = await eventsRes.json().catch(() => ({ events: [] }));
-      setEventCount(Array.isArray(eventsData.events) ? eventsData.events.length : 0);
-
-      const approvedEventsData = await approvedEventsRes.json().catch(() => ({ events: [] }));
+      setEventCount(Array.isArray(eventsData) ? eventsData.length : 0);
       setApprovedEvents(Array.isArray(approvedEventsData.events) ? approvedEventsData.events : []);
-
-      const pendingData = await pendingEventsRes.json().catch(() => ({ events: [] }));
       setPendingEvents(Array.isArray(pendingData.events) ? pendingData.events : []);
-
-      const deletionData = await deletionRequestsRes.json().catch(() => ({ events: [] }));
       setPendingDeletionRequests(Array.isArray(deletionData.events) ? deletionData.events : []);
 
-      const registrationsData = await registrationsRes.json().catch(() => ({ registrations: [] }));
       const normalizedRegistrations = Array.isArray(registrationsData.registrations) ? registrationsData.registrations : [];
       setRecentRegistrations(normalizedRegistrations);
       setRegistrationCount(Number(registrationsData.count || normalizedRegistrations.length || 0));
 
-      const usersData = await usersRes.json().catch(() => ({}));
-      if (!usersRes.ok) {
+      if (!usersData || !Array.isArray(usersData.users)) {
         setUsers([]);
-        setError(usersData.message || "Could not load admin users data.");
+        setError((usersData && usersData.message) || "Could not load admin users data.");
         return;
       }
 
-      setUsers(Array.isArray(usersData.users) ? usersData.users : []);
+      setUsers(usersData.users || []);
       setLastSyncedAt(Date.now());
     } catch (_error) {
       setError("Network issue while loading developer admin data.");
@@ -303,20 +272,7 @@ function AdminPortalPage({ token, onLogout }) {
     try {
       setApprovingEventId(eventId);
       setError("");
-
-      const response = await fetch(`${PAGE_API_BASE}/admin/events/${eventId}/approve`, {
-        method: "PATCH",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(data.message || "Could not approve event.");
-        return;
-      }
-
+      await campusAPI.approveEvent(eventId);
       setPendingEvents((prev) => prev.filter((event) => event.id !== eventId));
       await fetchAdminData();
     } catch (_error) {
@@ -330,20 +286,7 @@ function AdminPortalPage({ token, onLogout }) {
     try {
       setApprovingDeleteEventId(eventId);
       setError("");
-
-      const response = await fetch(`${PAGE_API_BASE}/admin/events/${eventId}/approve-delete`, {
-        method: "PATCH",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(data.message || "Could not approve event deletion.");
-        return;
-      }
-
+      await campusAPI.approveEventDeletion(eventId);
       setPendingDeletionRequests((prev) => prev.filter((event) => event.id !== eventId));
       await fetchAdminData();
     } catch (_error) {
@@ -905,20 +848,12 @@ function App() {
     setLoginError("");
 
     try {
-      const res = await fetch(`${PAGE_API_BASE}/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setLoginError(data.message || "Login failed");
-        return;
+      const data = await campusAPI.adminLogin(email, password);
+      if (data && data.token) {
+        setToken(data.token);
+      } else {
+        setLoginError(data?.message || "Login failed");
       }
-
-      setToken(data.token);
     } catch (error) {
       setLoginError("Network error. Please try again.");
     } finally {

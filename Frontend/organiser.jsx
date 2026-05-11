@@ -52,18 +52,8 @@ function OrganizerDashboardPage() {
 
     async function loadProfile() {
       try {
-        const response = await fetch(`${PAGE_API_BASE}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error("Unauthorized");
-        }
-
-        const data = await response.json();
-        const normalizedType = String(data?.user?.accountType || "").toLowerCase();
+        const userData = await campusAPI.getMe();
+        const normalizedType = String(userData?.accountType || "").toLowerCase();
 
         if (normalizedType !== "organizer") {
           window.location.href = "dashboard.html";
@@ -71,8 +61,8 @@ function OrganizerDashboardPage() {
         }
 
         if (mounted) {
-          setUser(data.user || {});
-          localStorage.setItem("cc_user", JSON.stringify(data.user || {}));
+          setUser(userData || {});
+          localStorage.setItem("cc_user", JSON.stringify(userData || {}));
         }
       } catch (_error) {
         localStorage.removeItem("cc_token");
@@ -97,15 +87,9 @@ function OrganizerDashboardPage() {
     async function loadEvents() {
       try {
         setIsLoadingEvents(true);
-        const response = await fetch(`${PAGE_API_BASE}/organizer/events`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
-
-        if (mounted && Array.isArray(data.events)) {
-          setEvents(data.events);
+        const eventsList = await campusAPI.getOrganizerEvents();
+        if (mounted && Array.isArray(eventsList)) {
+          setEvents(eventsList);
         }
       } catch (_error) {
         console.error("Load events error:", _error);
@@ -186,21 +170,11 @@ function OrganizerDashboardPage() {
       return;
     }
 
-    try {
-      setIsBusy(true);
-      setMessage({ type: "idle", text: "" });
+      try {
+        setIsBusy(true);
+        setMessage({ type: "idle", text: "" });
 
-      const isEditing = Number.isInteger(editingEventId);
-      const endpoint = isEditing ? `${PAGE_API_BASE}/organizer/events/${editingEventId}` : `${PAGE_API_BASE}/events`;
-      const method = isEditing ? "PATCH" : "POST";
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
+        const payload = {
           title: formData.title.trim(),
           eventType: formData.eventType,
           department: formData.department.trim(),
@@ -211,46 +185,39 @@ function OrganizerDashboardPage() {
           eventPrice: formData.eventPrice.trim() || "Free",
           maxTeamSize: Math.min(6, Math.max(1, Number(formData.maxTeamSize) || 1)),
           posterImage: formData.posterImage
-        })
-      });
+        };
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage({ type: "error", text: data.message || "Could not create event." });
-        return;
-      }
-
-      setFormData({
-        title: "",
-        eventType: "Workshop",
-        department: "",
-        date: "",
-        time: "",
-        location: "",
-        description: "",
-        eventPrice: "Free",
-        maxTeamSize: "6",
-        posterImage: ""
-      });
-      setEditingEventId(null);
-
-      setMessage({ type: "success", text: isEditing ? "Event updated successfully." : "Event created successfully." });
-
-      const reloadResponse = await fetch(`${PAGE_API_BASE}/organizer/events`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+        if (Number.isInteger(editingEventId)) {
+          await campusAPI.updateEvent(editingEventId, payload);
+        } else {
+          await campusAPI.createEvent(payload);
         }
-      });
-      const reloadData = await reloadResponse.json();
-      if (Array.isArray(reloadData.events)) {
-        setEvents(reloadData.events);
+
+        setFormData({
+          title: "",
+          eventType: "Workshop",
+          department: "",
+          date: "",
+          time: "",
+          location: "",
+          description: "",
+          eventPrice: "Free",
+          maxTeamSize: "6",
+          posterImage: ""
+        });
+        setEditingEventId(null);
+
+        setMessage({ type: "success", text: Number.isInteger(editingEventId) ? "Event updated successfully." : "Event created successfully." });
+
+        const eventsList = await campusAPI.getOrganizerEvents();
+        if (Array.isArray(eventsList)) {
+          setEvents(eventsList);
+        }
+      } catch (_error) {
+        setMessage({ type: "error", text: "Network error while saving event." });
+      } finally {
+        setIsBusy(false);
       }
-    } catch (_error) {
-      setMessage({ type: "error", text: "Network error while saving event." });
-    } finally {
-      setIsBusy(false);
-    }
   }
 
   function startEditingEvent(eventItem) {
@@ -301,29 +268,18 @@ function OrganizerDashboardPage() {
       return;
     }
 
-    try {
-      setLoadingRegistrationsFor(eventId);
-      const response = await fetch(`${PAGE_API_BASE}/organizer/events/${eventId}/registrations`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        setMessage({ type: "error", text: data.message || "Could not load registrations for this event." });
-        return;
+      try {
+        setLoadingRegistrationsFor(eventId);
+        const data = await campusAPI.getEventRegistrations(eventId);
+        setRegistrationsByEvent((prev) => ({
+          ...prev,
+          [eventId]: Array.isArray(data.registrations) ? data.registrations : []
+        }));
+      } catch (_error) {
+        setMessage({ type: "error", text: "Network issue while loading event registrations." });
+      } finally {
+        setLoadingRegistrationsFor(null);
       }
-
-      setRegistrationsByEvent((prev) => ({
-        ...prev,
-        [eventId]: Array.isArray(data.registrations) ? data.registrations : []
-      }));
-    } catch (_error) {
-      setMessage({ type: "error", text: "Network issue while loading event registrations." });
-    } finally {
-      setLoadingRegistrationsFor(null);
-    }
   }
 
   async function requestDeleteEvent(eventId) {
@@ -335,32 +291,13 @@ function OrganizerDashboardPage() {
 
     try {
       setRequestingDeleteFor(eventId);
-      const response = await fetch(`${PAGE_API_BASE}/organizer/events/${eventId}/delete-request`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ reason })
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setMessage({ type: "error", text: data.message || "Could not submit delete request." });
-        return;
-      }
-
-      setMessage({ type: "success", text: data.message || "Deletion request sent for admin approval." });
+      await campusAPI.requestEventDeletion(eventId, reason);
+      setMessage({ type: "success", text: "Deletion request sent for admin approval." });
       setDeleteReasonsByEvent((prev) => ({ ...prev, [eventId]: "" }));
 
-      const reloadResponse = await fetch(`${PAGE_API_BASE}/organizer/events`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const reloadData = await reloadResponse.json().catch(() => ({}));
-      if (Array.isArray(reloadData.events)) {
-        setEvents(reloadData.events);
+      const eventsList = await campusAPI.getOrganizerEvents();
+      if (Array.isArray(eventsList)) {
+        setEvents(eventsList);
       }
     } catch (_error) {
       setMessage({ type: "error", text: "Network issue while submitting delete request." });
