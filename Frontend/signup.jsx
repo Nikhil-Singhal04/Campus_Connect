@@ -3,9 +3,6 @@ const { useState } = React;
 function getThemeState() {
   return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
 }
-
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
 const REQUIRE_EMAIL_OTP = false;
 
 function SignupPage() {
@@ -232,17 +229,7 @@ function SignupPage() {
       setIsBusy(true);
       setMessage({ text: "", type: "idle" });
 
-      const response = await fetch(`${API_BASE}/auth/otp/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email.trim().toLowerCase() })
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Could not send verification code.");
-        return;
-      }
+      await campusAPI.sendOTP(formData.email.trim().toLowerCase());
 
       setIsCodeSent(true);
       setIsEmailVerified(false);
@@ -272,20 +259,7 @@ function SignupPage() {
       setIsBusy(true);
       setMessage({ text: "", type: "idle" });
 
-      const response = await fetch(`${API_BASE}/auth/otp/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email.trim().toLowerCase(),
-          code: enteredCode
-        })
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Could not verify code.");
-        return;
-      }
+      const data = await campusAPI.verifyOTP(formData.email.trim().toLowerCase(), enteredCode);
 
       setIsEmailVerified(true);
       setSignupProofToken(data.signupProofToken || "");
@@ -310,29 +284,19 @@ function SignupPage() {
       setIsBusy(true);
       setMessage({ text: "", type: "idle" });
 
-      const response = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          signupProofToken: REQUIRE_EMAIL_OTP ? signupProofToken : null,
-          accountType: formData.accountType,
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          regNo: formData.regNo.trim(),
-          department: formData.department,
-          programOrUnit: formData.programOrUnit.trim(),
-          yearOrDesignation: formData.yearOrDesignation.trim(),
-          email: formData.email.trim().toLowerCase(),
-          username: formData.username.trim().toLowerCase(),
-          password: formData.password
-        })
+      await campusAPI.register({
+        signupProofToken: REQUIRE_EMAIL_OTP ? signupProofToken : null,
+        accountType: formData.accountType,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        regNo: formData.regNo.trim(),
+        department: formData.department,
+        programOrUnit: formData.programOrUnit.trim(),
+        yearOrDesignation: formData.yearOrDesignation.trim(),
+        email: formData.email.trim().toLowerCase(),
+        username: formData.username.trim().toLowerCase(),
+        password: formData.password
       });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Could not complete signup.");
-        return;
-      }
 
       setSuccess("Signup completed successfully. Your account has been created.");
       setStep(1);

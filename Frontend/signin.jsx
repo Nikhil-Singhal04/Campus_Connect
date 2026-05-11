@@ -4,9 +4,6 @@ function getThemeState() {
   return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
 }
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
-
 function SigninPage() {
   const { isDark } = getThemeState();
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -35,23 +32,7 @@ function SigninPage() {
       setIsBusy(true);
       setMessage({ text: "", type: "idle" });
 
-      const response = await fetch(`${API_BASE}/auth/signin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password
-        })
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage({ text: data.message || "Could not sign in.", type: "error" });
-        return;
-      }
-
-      localStorage.setItem("cc_token", data.token || "");
-      localStorage.setItem("cc_user", JSON.stringify(data.user || {}));
+      const data = await campusAPI.signin(formData.email.trim().toLowerCase(), formData.password);
       setMessage({ text: "Signed in successfully. Redirecting...", type: "success" });
       const normalizedType = String(data?.user?.accountType || "").toLowerCase();
       if (normalizedType === "organizer") {

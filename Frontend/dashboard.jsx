@@ -1,7 +1,6 @@
 const { useEffect, useMemo, useRef, useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
 
 const DEPARTMENTS = ["All", "CSE", "Civil", "MBA", "Agriculture"];
 const EVENT_TYPES = ["All", "Coding", "Marketing", "Public Speaking", "Cultural", "Workshop", "Seminar"];
@@ -68,7 +67,7 @@ function DashboardPage() {
 
     async function loadProfile() {
       try {
-        const response = await fetch(`${API_BASE}/auth/me`, {
+        const response = await fetch(`${PAGE_API_BASE}/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -114,7 +113,7 @@ function DashboardPage() {
         if (selectedDept !== "All") params.append("department", selectedDept);
         if (selectedEventType !== "All") params.append("eventType", selectedEventType);
 
-        const response = await fetch(`${API_BASE}/events?${params.toString()}`);
+        const response = await fetch(`${PAGE_API_BASE}/events?${params.toString()}`);
         const data = await response.json();
 
         if (mounted && Array.isArray(data.events)) {
@@ -137,7 +136,7 @@ function DashboardPage() {
     async function loadMyRegistrations() {
       try {
         setIsLoadingMyRegistrations(true);
-        const response = await fetch(`${API_BASE}/me/registrations`, {
+        const response = await fetch(`${PAGE_API_BASE}/me/registrations`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -238,7 +237,7 @@ function DashboardPage() {
       if (selectedDept !== "All") params.append("department", selectedDept);
       if (selectedEventType !== "All") params.append("eventType", selectedEventType);
 
-      const response = await fetch(`${API_BASE}/events?${params.toString()}`);
+      const response = await fetch(`${PAGE_API_BASE}/events?${params.toString()}`);
       const data = await response.json();
 
       if (Array.isArray(data.events)) {

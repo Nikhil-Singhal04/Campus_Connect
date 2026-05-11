@@ -1,7 +1,6 @@
 const { useEffect, useMemo, useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
 
 function getThemeState() {
   return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
@@ -202,29 +201,29 @@ function AdminPortalPage({ token, onLogout }) {
       setError("");
 
       const [healthRes, usersRes, eventsRes, approvedEventsRes, pendingEventsRes, deletionRequestsRes, registrationsRes] = await Promise.all([
-        fetch(`${API_BASE}/health`),
-        fetch(`${API_BASE}/admin/users`, {
+        fetch(`${PAGE_API_BASE}/health`),
+        fetch(`${PAGE_API_BASE}/admin/users`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
         }),
-        fetch(`${API_BASE}/events`),
-        fetch(`${API_BASE}/admin/events?status=Approved`, {
+        fetch(`${PAGE_API_BASE}/events`),
+        fetch(`${PAGE_API_BASE}/admin/events?status=Approved`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
         }),
-        fetch(`${API_BASE}/admin/events?status=Pending`, {
+        fetch(`${PAGE_API_BASE}/admin/events?status=Pending`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
         }),
-        fetch(`${API_BASE}/admin/events/deletion-requests`, {
+        fetch(`${PAGE_API_BASE}/admin/events/deletion-requests`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
         }),
-        fetch(`${API_BASE}/admin/registrations?limit=120`, {
+        fetch(`${PAGE_API_BASE}/admin/registrations?limit=120`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
@@ -305,7 +304,7 @@ function AdminPortalPage({ token, onLogout }) {
       setApprovingEventId(eventId);
       setError("");
 
-      const response = await fetch(`${API_BASE}/admin/events/${eventId}/approve`, {
+      const response = await fetch(`${PAGE_API_BASE}/admin/events/${eventId}/approve`, {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -332,7 +331,7 @@ function AdminPortalPage({ token, onLogout }) {
       setApprovingDeleteEventId(eventId);
       setError("");
 
-      const response = await fetch(`${API_BASE}/admin/events/${eventId}/approve-delete`, {
+      const response = await fetch(`${PAGE_API_BASE}/admin/events/${eventId}/approve-delete`, {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -906,7 +905,7 @@ function App() {
     setLoginError("");
 
     try {
-      const res = await fetch(`${API_BASE}/admin/login`, {
+      const res = await fetch(`${PAGE_API_BASE}/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
