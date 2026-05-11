@@ -5,6 +5,7 @@ const API_BASE = `http://${API_HOST}:4000/api`;
 
 const DEPARTMENTS = ["All", "CSE", "Civil", "MBA", "Agriculture"];
 const EVENT_TYPES = ["All", "Coding", "Marketing", "Public Speaking", "Cultural", "Workshop", "Seminar"];
+const ADMIN_TOKEN_KEY = "cc_admin_token";
 const EXTRA_PROFILE_KEY = "cc_profile_extra";
 const SETTINGS_KEY = "cc_user_settings";
 
@@ -32,6 +33,8 @@ function readSavedSettings() {
 
 function DashboardPage() {
   const token = localStorage.getItem("cc_token");
+  const adminToken = localStorage.getItem(ADMIN_TOKEN_KEY);
+  const isAdminSession = !token && Boolean(adminToken);
   const [user, setUser] = useState(() => {
     const rawUser = localStorage.getItem("cc_user");
     try {
@@ -53,7 +56,7 @@ function DashboardPage() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
 
-  if (!token) {
+  if (!token && !adminToken) {
     window.location.href = "signin.html";
     return null;
   }
@@ -62,6 +65,14 @@ function DashboardPage() {
     let mounted = true;
 
     async function loadProfile() {
+      if (isAdminSession) {
+        if (mounted) {
+          setUser({ firstName: "Admin", lastName: "", username: "admin", accountType: "Admin" });
+          setIsLoading(false);
+        }
+        return;
+      }
+
       try {
         const response = await fetch(`${API_BASE}/auth/me`, {
           headers: {
@@ -130,6 +141,14 @@ function DashboardPage() {
     let mounted = true;
 
     async function loadMyRegistrations() {
+      if (!token) {
+        if (mounted) {
+          setMyRegistrations([]);
+          setIsLoadingMyRegistrations(false);
+        }
+        return;
+      }
+
       try {
         setIsLoadingMyRegistrations(true);
         const response = await fetch(`${API_BASE}/me/registrations`, {
@@ -280,6 +299,7 @@ function DashboardPage() {
   function signOut() {
     localStorage.removeItem("cc_token");
     localStorage.removeItem("cc_user");
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
     window.location.href = "signin.html";
   }
 
@@ -392,17 +412,18 @@ function DashboardPage() {
           </div>
         </section>
 
-        <section className="mt-10 rounded-[1.75rem] border border-[#d7e5f1] bg-white/70 px-6 py-6 shadow-[0_14px_34px_rgba(30,53,79,0.06)] backdrop-blur-sm md:px-8">
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <section className="mt-10 px-4 py-3 md:px-8">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
             {EVENT_TYPES.map((type) => (
               <button
                 key={type}
                 onClick={() => setSelectedEventType(type)}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition duration-200 ${
                   selectedEventType === type
-                    ? "bg-[#149a8e] text-white shadow-[0_10px_18px_rgba(20,154,142,0.22)]"
-                    : "bg-white text-[#5a6f86] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5fbff]"
+                    ? "bg-[#149a8e] text-white shadow-[0_6px_12px_rgba(20,154,142,0.14)]"
+                    : "bg-white text-[#4e637a] border border-[#e9f1f7] hover:border-[#d6e9f8]"
                 }`}
+                style={{ minWidth: 96 }}
               >
                 {type}
               </button>
@@ -495,16 +516,24 @@ function DashboardPage() {
                   </div>
                   <button
                     onClick={() => handleRegisterClick(event)}
-                    disabled={registeredEventIdSet.has(Number(event.id)) || isEventPast(event.date)}
+                    disabled={isAdminSession || registeredEventIdSet.has(Number(event.id)) || isEventPast(event.date)}
                     className={`mt-5 w-full rounded-full py-2.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(14,143,132,0.2)] transition ${
-                      registeredEventIdSet.has(Number(event.id))
+                      isAdminSession
+                        ? "cursor-not-allowed bg-[#7b8ea3]"
+                        : registeredEventIdSet.has(Number(event.id))
                         ? "cursor-not-allowed bg-[#7ba8a3]"
                         : isEventPast(event.date)
                         ? "cursor-not-allowed bg-[#9ca3a8]"
                         : "bg-[#0e8f84] hover:bg-[#0d7a6e]"
                     }`}
                   >
-                        {registeredEventIdSet.has(Number(event.id)) ? "Registered" : isEventPast(event.date) ? "Event Wrapped Up" : "Register"}
+                        {isAdminSession
+                          ? "Admin View"
+                          : registeredEventIdSet.has(Number(event.id))
+                          ? "Registered"
+                          : isEventPast(event.date)
+                          ? "Event Wrapped Up"
+                          : "Register"}
                   </button>
                 </div>
               </div>
@@ -541,16 +570,24 @@ function DashboardPage() {
                   </div>
                   <button
                     onClick={() => handleRegisterClick(event)}
-                    disabled={registeredEventIdSet.has(Number(event.id)) || isEventPast(event.date)}
+                    disabled={isAdminSession || registeredEventIdSet.has(Number(event.id)) || isEventPast(event.date)}
                     className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(14,143,132,0.2)] transition ${
-                      registeredEventIdSet.has(Number(event.id))
+                      isAdminSession
+                        ? "cursor-not-allowed bg-[#7b8ea3]"
+                        : registeredEventIdSet.has(Number(event.id))
                         ? "cursor-not-allowed bg-[#7ba8a3]"
                         : isEventPast(event.date)
                         ? "cursor-not-allowed bg-[#9ca3a8]"
                         : "bg-[#0e8f84] hover:bg-[#0d7a6e]"
                     }`}
                   >
-                        {registeredEventIdSet.has(Number(event.id)) ? "Registered" : isEventPast(event.date) ? "Event Wrapped Up" : "Register"}
+                        {isAdminSession
+                          ? "Admin View"
+                          : registeredEventIdSet.has(Number(event.id))
+                          ? "Registered"
+                          : isEventPast(event.date)
+                          ? "Event Wrapped Up"
+                          : "Register"}
                   </button>
                 </div>
               </div>

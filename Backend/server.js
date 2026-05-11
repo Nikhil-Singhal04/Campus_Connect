@@ -177,6 +177,42 @@ function normalizeApprovalStatus(value) {
   return "Pending";
 }
 
+function normalizeEventRow(row) {
+  if (!row) return row;
+
+  return {
+    ...row,
+    eventType: row.eventType ?? row.eventtype ?? row.event_type,
+    maxTeamSize: row.maxTeamSize ?? row.maxtteamsize ?? row.max_team_size,
+    posterImage: row.posterImage ?? row.posterimage ?? row.poster_image,
+    image: row.image ?? row.posterimage ?? row.poster_image,
+    approvalStatus: row.approvalStatus ?? row.approvalstatus ?? row.approval_status,
+    editChangeSummary: row.editChangeSummary ?? row.editchangesummary ?? row.edit_change_summary,
+    editRequestedAt: row.editRequestedAt ?? row.editrequestedat ?? row.edit_requested_at,
+    deleteRequestReason: row.deleteRequestReason ?? row.deleterequestreason ?? row.delete_request_reason,
+    deleteRequestedAt: row.deleteRequestedAt ?? row.deleterequestedat ?? row.delete_requested_at,
+    organizerId: row.organizerId ?? row.organizerid ?? row.organizer_id,
+    createdBy: row.createdBy ?? row.createdby ?? row.created_by,
+    createdAt: row.createdAt ?? row.createdat ?? row.created_at,
+    registrationCount: row.registrationCount ?? row.registrationcount
+  };
+}
+
+function normalizeUserRow(row) {
+  if (!row) return row;
+
+  return {
+    ...row,
+    accountType: row.accountType ?? row.accounttype ?? row.account_type,
+    firstName: row.firstName ?? row.firstname ?? row.first_name,
+    lastName: row.lastName ?? row.lastname ?? row.last_name,
+    regNo: row.regNo ?? row.regno ?? row.reg_no,
+    programOrUnit: row.programOrUnit ?? row.programorunit ?? row.program_or_unit,
+    yearOrDesignation: row.yearOrDesignation ?? row.yearordesignation ?? row.year_or_designation,
+    createdAt: row.createdAt ?? row.createdat ?? row.created_at
+  };
+}
+
 function normalizeMaxTeamSize(value, fallback = 6) {
   const parsed = Number(value);
   const base = Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
@@ -487,7 +523,7 @@ app.get("/api/events", async (req, res) => {
 
     sql += ` ORDER BY created_at DESC`;
 
-    const events = await all(sql, params);
+    const events = (await all(sql, params)).map(normalizeEventRow);
     console.log("Events fetched:", { count: events.length, filters: { department, eventType } });
     return res.json({ events });
   } catch (error) {
@@ -530,8 +566,15 @@ app.post("/api/events/:id/register", authLimiter, async (req, res) => {
       [eventId]
     );
 
-    if (!event || event.approvalStatus !== "Approved") {
-      return jsonError(res, 404, "Event not found or unavailable.");
+    const approvalStatus = String(event?.approvalStatus ?? event?.approvalstatus ?? event?.approval_status ?? "").trim();
+    const normalizedApproval = approvalStatus.toLowerCase();
+
+    if (!event) {
+      return jsonError(res, 404, "Event not found.");
+    }
+
+    if (normalizedApproval !== "approved") {
+      return jsonError(res, 403, "Event is not approved yet.");
     }
 
     // Check if event date has passed
@@ -558,7 +601,7 @@ app.post("/api/events/:id/register", authLimiter, async (req, res) => {
     const notes = String(req.body.notes || "").trim();
     const pricingLabel = String(req.body.pricingLabel || "Free Entry").trim() || "Free Entry";
     const paymentPath = String(req.body.paymentPath || "").trim();
-    const eventMaxTeamSize = normalizeMaxTeamSize(event.maxTeamSize, 6);
+    const eventMaxTeamSize = normalizeMaxTeamSize(event.maxTeamSize ?? event.maxteamsize ?? event.max_team_size, 6);
 
     if (!fullName || !email || !phone) {
       return jsonError(res, 400, "Name, email, and phone are required.");
@@ -694,7 +737,7 @@ app.get("/api/organizer/events", async (req, res) => {
       return jsonError(res, 403, "Only organizers can access this data.");
     }
 
-    const events = await all(
+    const events = (await all(
       `SELECT
           e.id,
           e.title,
@@ -720,7 +763,7 @@ app.get("/api/organizer/events", async (req, res) => {
        GROUP BY e.id
        ORDER BY e.created_at DESC`,
       [user.id]
-    );
+    )).map(normalizeEventRow);
 
     return res.json({ events });
   } catch (error) {
@@ -873,7 +916,7 @@ app.get("/api/admin/events", adminLimiter, requireDeveloper, async (req, res) =>
 
     sql += ` GROUP BY e.id ORDER BY e.created_at DESC`;
 
-    const events = await all(sql, params);
+    const events = (await all(sql, params)).map(normalizeEventRow);
     return res.json({ count: events.length, events });
   } catch (error) {
     console.error("Admin events error:", error);
@@ -883,7 +926,7 @@ app.get("/api/admin/events", adminLimiter, requireDeveloper, async (req, res) =>
 
 app.get("/api/admin/events/deletion-requests", adminLimiter, requireDeveloper, async (_req, res) => {
   try {
-    const events = await all(
+    const events = (await all(
       `SELECT
           e.id,
           e.title,
@@ -906,7 +949,7 @@ app.get("/api/admin/events/deletion-requests", adminLimiter, requireDeveloper, a
        WHERE e.delete_requested_at IS NOT NULL
        GROUP BY e.id
        ORDER BY e.delete_requested_at DESC`
-    );
+     )).map(normalizeEventRow);
 
     return res.json({ count: events.length, events });
   } catch (error) {
@@ -951,6 +994,50 @@ app.get("/api/admin/registrations", adminLimiter, requireDeveloper, async (req, 
   } catch (error) {
     console.error("Admin registrations error:", error);
     return jsonError(res, 500, "Could not fetch registrations right now.");
+  }
+});
+
+app.get("/api/admin/events/:id/registrations", adminLimiter, requireDeveloper, async (req, res) => {
+  try {
+    const eventId = Number(req.params.id);
+    if (!Number.isInteger(eventId) || eventId <= 0) {
+      return jsonError(res, 400, "Invalid event id.");
+    }
+
+    const event = await get(`SELECT id, title FROM events WHERE id = ?`, [eventId]);
+    if (!event) {
+      return jsonError(res, 404, "Event not found.");
+    }
+
+    const registrations = await all(
+      `SELECT
+          r.id,
+          r.event_id AS eventId,
+          r.user_id AS userId,
+          r.full_name AS fullName,
+          r.email,
+          r.phone,
+          r.year_or_designation AS yearOrDesignation,
+          r.notes,
+          r.pricing_label AS pricingLabel,
+          r.payment_path AS paymentPath,
+          r.created_at AS createdAt,
+          e.title AS eventTitle,
+          e.department,
+          e.date,
+          e.time,
+          e.created_by AS organizerUsername
+       FROM event_registrations r
+       INNER JOIN events e ON e.id = r.event_id
+       WHERE r.event_id = ?
+       ORDER BY r.created_at DESC`,
+      [eventId]
+    );
+
+    return res.json({ eventId, eventTitle: event.title, count: registrations.length, registrations });
+  } catch (error) {
+    console.error("Admin event registrations error:", error);
+    return jsonError(res, 500, "Could not fetch event registrations right now.");
   }
 });
 
@@ -1064,7 +1151,7 @@ app.post("/api/admin/login", adminLimiter, async (req, res) => {
 
 app.get("/api/admin/users", adminLimiter, requireDeveloper, async (_req, res) => {
   try {
-    const users = await all(
+    const users = (await all(
       `SELECT
         id,
         account_type AS accountType,
@@ -1079,7 +1166,7 @@ app.get("/api/admin/users", adminLimiter, requireDeveloper, async (_req, res) =>
         created_at AS createdAt
        FROM users
        ORDER BY id DESC`
-    );
+       )).map(normalizeUserRow);
 
     res.json({ count: users.length, users });
   } catch (error) {

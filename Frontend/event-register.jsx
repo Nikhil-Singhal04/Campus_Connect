@@ -100,7 +100,20 @@ function EventRegistrationPage() {
           return;
         }
 
-        const response = await fetch(`${API_BASE}/events`);
+        const response = await fetch(`${API_BASE}/events`, { cache: "no-store" });
+        if (response.status === 304) {
+          if (selectedEvent) {
+            if (mounted) {
+              setEventData(selectedEvent);
+              setIsLoading(false);
+            }
+            return;
+          }
+          throw new Error("Events list not modified");
+        }
+        if (!response.ok) {
+          throw new Error(`Failed to load events (${response.status})`);
+        }
         const payload = await response.json().catch(() => ({ events: [] }));
         const events = Array.isArray(payload.events) ? payload.events : [];
         const matchedEvent = events.find((item) => String(item.id) === String(queryId));
