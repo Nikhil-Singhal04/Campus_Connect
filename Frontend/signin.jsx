@@ -1,9 +1,11 @@
 const { useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+function getThemeState() {
+  return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
+}
 
 function SigninPage() {
+  const { isDark } = getThemeState();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [message, setMessage] = useState({ text: "", type: "idle" });
   const [isBusy, setIsBusy] = useState(false);
@@ -30,23 +32,7 @@ function SigninPage() {
       setIsBusy(true);
       setMessage({ text: "", type: "idle" });
 
-      const response = await fetch(`${API_BASE}/auth/signin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password
-        })
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage({ text: data.message || "Could not sign in.", type: "error" });
-        return;
-      }
-
-      localStorage.setItem("cc_token", data.token || "");
-      localStorage.setItem("cc_user", JSON.stringify(data.user || {}));
+      const data = await campusAPI.signin(formData.email.trim().toLowerCase(), formData.password);
       setMessage({ text: "Signed in successfully. Redirecting...", type: "success" });
       const normalizedType = String(data?.user?.accountType || "").toLowerCase();
       if (normalizedType === "organizer") {
@@ -69,16 +55,16 @@ function SigninPage() {
       : "text-[#9fb4dd]";
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(140deg,#fbfdff,#e9f3ff)] p-3 md:p-6">
-      <div className="mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1100px] overflow-hidden rounded-[2rem] border border-[#cfdeeb] shadow-[0_22px_52px_rgba(26,49,74,0.12)] lg:grid-cols-2">
+    <div className={`min-h-screen p-3 md:p-6 ${isDark ? "bg-[linear-gradient(140deg,#09111b,#111d2d)] text-[#e8eef7]" : "bg-[linear-gradient(140deg,#fbfdff,#e9f3ff)] text-[#1f3149]"}`}>
+      <div className={`mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1100px] overflow-hidden rounded-[2rem] border shadow-[0_22px_52px_rgba(26,49,74,0.12)] lg:grid-cols-2 ${isDark ? "border-white/10 bg-[#0f1724]/95 shadow-[0_22px_52px_rgba(0,0,0,0.3)]" : "border-[#cfdeeb] bg-white"}`}>
         <section className="relative">
           <img
             src="signup-hero.svg"
             alt="Students walking on a university campus"
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,11,24,0.1),rgba(7,11,24,0.78))]" />
-          <div className="absolute left-0 right-0 top-0 flex min-h-[92px] items-center overflow-hidden bg-[#5fd8cf] px-6 py-2 shadow-[0_7px_0_0_#5fd8cf] md:min-h-[110px] md:px-10 md:shadow-[0_9px_0_0_#5fd8cf] animate-fadeUp">
+          <div className={`absolute inset-0 ${isDark ? "bg-[linear-gradient(180deg,rgba(7,11,24,0.22),rgba(7,11,24,0.9))]" : "bg-[linear-gradient(180deg,rgba(7,11,24,0.1),rgba(7,11,24,0.78))]"}`} />
+          <div className={`absolute left-0 right-0 top-0 flex min-h-[92px] items-center overflow-hidden px-6 py-2 shadow-[0_7px_0_0_#5fd8cf] md:min-h-[110px] md:px-10 md:shadow-[0_9px_0_0_#5fd8cf] animate-fadeUp ${isDark ? "bg-[#13253a] shadow-[0_7px_0_0_#13253a] md:shadow-[0_9px_0_0_#13253a]" : "bg-[#5fd8cf]"}`}>
             <div
               className="absolute inset-0"
               style={{
@@ -96,29 +82,29 @@ function SigninPage() {
             />
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 animate-fadeUp">
-            <p className="text-xs uppercase tracking-[0.14em] text-[#8df9e3]">Welcome Back</p>
+            <p className={`text-xs uppercase tracking-[0.14em] ${isDark ? "text-[#9ff4e4]" : "text-[#8df9e3]"}`}>Welcome Back</p>
             <h1 className="mt-2 max-w-[15ch] font-display text-4xl leading-tight md:text-5xl">Continue your campus event journey.</h1>
-            <p className="mt-4 max-w-[50ch] text-sm text-[#d6e6ff] md:text-base">
+            <p className={`mt-4 max-w-[50ch] text-sm md:text-base ${isDark ? "text-[#c6d6ea]" : "text-[#d6e6ff]"}`}>
               Access your dashboard, track registrations, and stay connected to campus opportunities.
             </p>
           </div>
         </section>
 
-        <section className="flex items-center bg-[linear-gradient(180deg,#ffffff,#f5faff)] p-5 md:p-8">
+        <section className={`flex items-center p-5 md:p-8 ${isDark ? "bg-[linear-gradient(180deg,#101a2a,#0d1724)]" : "bg-[linear-gradient(180deg,#ffffff,#f5faff)]"}`}>
           <div className="w-full animate-fadeUp">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <p className="font-display text-xl font-semibold text-[#1a2a3d]">Sign in</p>
-                <p className="text-sm text-[#5f748a]">Access your account</p>
+                <p className={`font-display text-xl font-semibold ${isDark ? "text-[#eef4fb]" : "text-[#1a2a3d]"}`}>Sign in</p>
+                <p className={`text-sm ${isDark ? "text-[#aebfd3]" : "text-[#5f748a]"}`}>Access your account</p>
               </div>
-              <a href="index.html" className="text-sm text-[#0e8f84] underline underline-offset-4 hover:text-[#0d7a72]">Home</a>
+              <a href="index.html" className={`text-sm underline underline-offset-4 ${isDark ? "text-[#89ece0] hover:text-white" : "text-[#0e8f84] hover:text-[#0d7a72]"}`}>Home</a>
             </div>
 
             <form onSubmit={handleSubmit} noValidate>
-              <label className="block text-sm text-[#24344a]">
+              <label className={`block text-sm ${isDark ? "text-[#dce8f4]" : "text-[#24344a]"}`}>
                 Official email
                 <input
-                  className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-[#ffffff] px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                  className={`mt-2 w-full rounded-xl border px-3 py-3 outline-none transition focus:ring-2 ${isDark ? "border-white/10 bg-[#0b1320] text-[#eef4fb] focus:border-[#73d6cb] focus:ring-[#73d6cb30]" : "border-[#d2dfeb] bg-[#ffffff] text-[#1a2a3d] focus:border-[#0ea596] focus:ring-[#0ea59630]"}`}
                   type="email"
                   name="email"
                   value={formData.email}
@@ -127,10 +113,10 @@ function SigninPage() {
                 />
               </label>
 
-              <label className="mt-3 block text-sm text-[#24344a]">
+              <label className={`mt-3 block text-sm ${isDark ? "text-[#dce8f4]" : "text-[#24344a]"}`}>
                 Password
                 <input
-                  className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-[#ffffff] px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                  className={`mt-2 w-full rounded-xl border px-3 py-3 outline-none transition focus:ring-2 ${isDark ? "border-white/10 bg-[#0b1320] text-[#eef4fb] focus:border-[#73d6cb] focus:ring-[#73d6cb30]" : "border-[#d2dfeb] bg-[#ffffff] text-[#1a2a3d] focus:border-[#0ea596] focus:ring-[#0ea59630]"}`}
                   type="password"
                   name="password"
                   value={formData.password}
@@ -155,8 +141,8 @@ function SigninPage() {
                   : "text-[#5f748a]"
               }`}>{message.text}</p>
 
-              <p className="mt-2 text-sm text-[#5f748a]">
-                New here? <a href="signup.html" className="text-[#0e8f84] underline underline-offset-4 hover:text-[#0d7a72]">Create account</a>
+              <p className={`mt-2 text-sm ${isDark ? "text-[#aebfd3]" : "text-[#5f748a]"}`}>
+                New here? <a href="signup.html" className={`underline underline-offset-4 ${isDark ? "text-[#89ece0] hover:text-white" : "text-[#0e8f84] hover:text-[#0d7a72]"}`}>Create account</a>
               </p>
             </form>
           </div>

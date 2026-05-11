@@ -1397,6 +1397,383 @@ app.get("/api/auth/me", async (req, res) => {
   }
 });
 
+// ============ User Profile Endpoints ============
+app.get("/api/profile", authLimiter, async (req, res) => {
+  try {
+    const session = getSessionPayload(req);
+    if (!session || !session.userId) {
+      return jsonError(res, 401, "Unauthorized.");
+    }
+
+    const user = await get(
+      `SELECT
+        id,
+        account_type AS accountType,
+        first_name AS firstName,
+        last_name AS lastName,
+        reg_no AS regNo,
+        department,
+        program_or_unit AS programOrUnit,
+        year_or_designation AS yearOrDesignation,
+        email,
+        username,
+        created_at AS createdAt
+       FROM users
+       WHERE id = ?`,
+      [session.userId]
+    );
+
+    if (!user) {
+      return jsonError(res, 401, "User not found.");
+    }
+
+    return res.json({ user });
+  } catch (error) {
+    console.error("Get profile error:", error);
+    return jsonError(res, 500, "Could not fetch profile right now.");
+  }
+});
+
+app.patch("/api/profile", authLimiter, async (req, res) => {
+  try {
+    const session = getSessionPayload(req);
+    if (!session || !session.userId) {
+      return jsonError(res, 401, "Unauthorized.");
+    }
+
+    const {
+      firstName,
+      lastName,
+      department,
+      programOrUnit,
+      yearOrDesignation
+    } = req.body;
+
+    const user = await get(`SELECT id FROM users WHERE id = ?`, [session.userId]);
+    if (!user) {
+      return jsonError(res, 401, "User not found.");
+    }
+
+    const updates = [];
+    const values = [];
+
+    if (firstName !== undefined) {
+      updates.push("first_name = ?");
+      values.push(String(firstName).trim());
+    }
+
+    if (lastName !== undefined) {
+      updates.push("last_name = ?");
+      values.push(String(lastName).trim());
+    }
+
+    if (department !== undefined) {
+      updates.push("department = ?");
+      values.push(String(department).trim());
+    }
+
+    if (programOrUnit !== undefined) {
+      updates.push("program_or_unit = ?");
+      values.push(String(programOrUnit).trim());
+    }
+
+    if (yearOrDesignation !== undefined) {
+      updates.push("year_or_designation = ?");
+      values.push(String(yearOrDesignation).trim());
+    }
+
+    if (updates.length === 0) {
+      return jsonError(res, 400, "No fields to update.");
+    }
+
+    values.push(session.userId);
+
+    await run(
+      `UPDATE users SET ${updates.join(", ")} WHERE id = ?`,
+      values
+    );
+
+    return res.json({ message: "Profile updated successfully." });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return jsonError(res, 500, "Could not update profile right now.");
+  }
+});
+
+// ============ Event Details Endpoint ============
+app.get("/api/events/:id", async (req, res) => {
+  try {
+    const eventId = Number(req.params.id);
+    if (!Number.isInteger(eventId) || eventId <= 0) {
+      return jsonError(res, 400, "Invalid event id.");
+    }
+
+    const event = await get(
+      `SELECT
+        id,
+        title,
+        event_type AS eventType,
+        department,
+        date,
+        time,
+        location,
+        description,
+        event_price AS price,
+        max_team_size AS maxTeamSize,
+        poster_image AS posterImage,
+        poster_image AS image,
+        approval_status AS approvalStatus,
+        created_by AS createdBy,
+        created_at AS createdAt
+       FROM events
+       WHERE id = ? AND approval_status = 'Approved'`,
+      [eventId]
+    );
+
+    if (!event) {
+      return jsonError(res, 404, "Event not found.");
+    }
+
+    const registrationCount = await get(
+      `SELECT COUNT(*) AS count FROM event_registrations WHERE event_id = ?`,
+      [eventId]
+    );
+
+    return res.json({
+      event: {
+        ...event,
+        registrations: registrationCount?.count || 0
+      }
+    });
+  } catch (error) {
+    console.error("Get event error:", error);
+    return jsonError(res, 500, "Could not fetch event right now.");
+  }
+});
+
+// ============ Registration Cancellation Endpoint ============
+app.delete("/api/me/registrations/:id", authLimiter, async (req, res) => {
+  try {
+    const session = getSessionPayload(req);
+    if (!session || !session.userId) {
+      return jsonError(res, 401, "Unauthorized.");
+    }
+
+    const registrationId = Number(req.params.id);
+    if (!Number.isInteger(registrationId) || registrationId <= 0) {
+      return jsonError(res, 400, "Invalid registration id.");
+    }
+
+    const registration = await get(
+      `SELECT id, user_id AS userId, event_id AS eventId FROM event_registrations WHERE id = ?`,
+      [registrationId]
+    );
+
+    if (!registration) {
+      return jsonError(res, 404, "Registration not found.");
+    }
+
+    if (registration.userId !== session.userId) {
+      return jsonError(res, 403, "You can only cancel your own registrations.");
+    }
+
+    const event = await get(
+      `SELECT date FROM events WHERE id = ?`,
+      [registration.eventId]
+    );
+
+    if (event && event.date) {
+      try {
+        const eventDate = new Date(event.date);
+        const today = new Date();
+        eventDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+
+        if (eventDate <= today) {
+          return jsonError(res, 410, "Cannot cancel registration for events that have started.");
+        }
+      } catch (_dateError) {
+        // Continue if date parsing fails
+      }
+    }
+
+    await run(
+      `DELETE FROM event_registrations WHERE id = ? AND user_id = ?`,
+      [registrationId, session.userId]
+    );
+
+    return res.json({ message: "Registration cancelled successfully." });
+  } catch (error) {
+    console.error("Cancel registration error:", error);
+    return jsonError(res, 500, "Could not cancel registration right now.");
+  }
+});
+
+// ============ Payment Endpoints ============
+app.post("/api/payments/create-intent", authLimiter, async (req, res) => {
+  try {
+    const session = getSessionPayload(req);
+    if (!session || !session.userId) {
+      return jsonError(res, 401, "Unauthorized.");
+    }
+
+    const user = await get(
+      `SELECT id, email, first_name, last_name FROM users WHERE id = ?`,
+      [session.userId]
+    );
+
+    if (!user) {
+      return jsonError(res, 401, "User not found.");
+    }
+
+    const { amount, currency = "USD", eventId, description } = req.body;
+
+    if (!amount || amount <= 0) {
+      return jsonError(res, 400, "Invalid payment amount.");
+    }
+
+    if (!eventId) {
+      return jsonError(res, 400, "Event ID is required.");
+    }
+
+    const event = await get(
+      `SELECT id, title FROM events WHERE id = ? AND approval_status = 'Approved'`,
+      [eventId]
+    );
+
+    if (!event) {
+      return jsonError(res, 404, "Event not found.");
+    }
+
+    // TODO: Integrate with Stripe API
+    // For now, return a mock response
+    const paymentIntentId = `pi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    return res.json({
+      paymentIntentId,
+      amount,
+      currency,
+      status: "requires_payment_method",
+      clientSecret: `${paymentIntentId}_secret_${Math.random().toString(36).substr(2, 20)}`,
+      message: "Payment intent created successfully."
+    });
+  } catch (error) {
+    console.error("Create payment intent error:", error);
+    return jsonError(res, 500, "Could not create payment intent right now.");
+  }
+});
+
+app.post("/api/payments/confirm", authLimiter, async (req, res) => {
+  try {
+    const session = getSessionPayload(req);
+    if (!session || !session.userId) {
+      return jsonError(res, 401, "Unauthorized.");
+    }
+
+    const { paymentIntentId, registrationId } = req.body;
+
+    if (!paymentIntentId || !registrationId) {
+      return jsonError(res, 400, "Missing payment intent or registration id.");
+    }
+
+    const registration = await get(
+      `SELECT id, user_id, event_id, payment_path FROM event_registrations WHERE id = ? AND user_id = ?`,
+      [registrationId, session.userId]
+    );
+
+    if (!registration) {
+      return jsonError(res, 404, "Registration not found.");
+    }
+
+    // TODO: Verify payment with Stripe
+    // For now, mark as confirmed
+    await run(
+      `UPDATE event_registrations SET payment_path = ? WHERE id = ?`,
+      [paymentIntentId, registrationId]
+    );
+
+    return res.json({
+      message: "Payment confirmed successfully.",
+      registration: {
+        id: registration.id,
+        eventId: registration.event_id,
+        paymentPath: paymentIntentId
+      }
+    });
+  } catch (error) {
+    console.error("Confirm payment error:", error);
+    return jsonError(res, 500, "Could not confirm payment right now.");
+  }
+});
+
+// ============ Admin Dashboard Stats Endpoint ============
+app.get("/api/admin/stats", adminLimiter, requireDeveloper, async (_req, res) => {
+  try {
+    const totalUsers = await get(`SELECT COUNT(*) AS count FROM users`);
+    const totalStudents = await get(`SELECT COUNT(*) AS count FROM users WHERE account_type = 'Student'`);
+    const totalOrganizers = await get(`SELECT COUNT(*) AS count FROM users WHERE account_type = 'Organizer'`);
+    const totalEvents = await get(`SELECT COUNT(*) AS count FROM events`);
+    const approvedEvents = await get(`SELECT COUNT(*) AS count FROM events WHERE approval_status = 'Approved'`);
+    const pendingEvents = await get(`SELECT COUNT(*) AS count FROM events WHERE approval_status = 'Pending'`);
+    const rejectedEvents = await get(`SELECT COUNT(*) AS count FROM events WHERE approval_status = 'Rejected'`);
+    const deletionRequests = await get(`SELECT COUNT(*) AS count FROM events WHERE delete_requested_at IS NOT NULL`);
+    const totalRegistrations = await get(`SELECT COUNT(*) AS count FROM event_registrations`);
+
+    const eventsByDepartment = await all(
+      `SELECT department, COUNT(*) AS count FROM events GROUP BY department ORDER BY count DESC`
+    );
+
+    const eventsByType = await all(
+      `SELECT event_type AS eventType, COUNT(*) AS count FROM events GROUP BY event_type ORDER BY count DESC`
+    );
+
+    const registrationsByStatus = await all(
+      `SELECT e.approval_status AS status, COUNT(r.id) AS count
+       FROM events e
+       LEFT JOIN event_registrations r ON r.event_id = e.id
+       GROUP BY e.approval_status`
+    );
+
+    const recentEvents = await all(
+      `SELECT
+        id,
+        title,
+        event_type AS eventType,
+        approval_status AS approvalStatus,
+        created_at AS createdAt,
+        (SELECT COUNT(*) FROM event_registrations WHERE event_id = events.id) AS registrationCount
+       FROM events
+       ORDER BY created_at DESC
+       LIMIT 10`
+    );
+
+    return res.json({
+      users: {
+        total: totalUsers?.count || 0,
+        students: totalStudents?.count || 0,
+        organizers: totalOrganizers?.count || 0
+      },
+      events: {
+        total: totalEvents?.count || 0,
+        approved: approvedEvents?.count || 0,
+        pending: pendingEvents?.count || 0,
+        rejected: rejectedEvents?.count || 0,
+        deletionRequests: deletionRequests?.count || 0,
+        byDepartment: eventsByDepartment || [],
+        byType: eventsByType || []
+      },
+      registrations: {
+        total: totalRegistrations?.count || 0,
+        byStatus: registrationsByStatus || []
+      },
+      recentEvents: recentEvents || []
+    });
+  } catch (error) {
+    console.error("Admin stats error:", error);
+    return jsonError(res, 500, "Could not fetch admin statistics right now.");
+  }
+});
+
 initializeDatabase()
   .then(() => {
     app.listen(PORT, () => {

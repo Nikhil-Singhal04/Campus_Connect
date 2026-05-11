@@ -1,9 +1,13 @@
 const { useEffect, useMemo, useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
+
+function getThemeState() {
+  return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
+}
 
 function OrganizerDashboardPage() {
+  const { isDark } = getThemeState();
   const token = localStorage.getItem("cc_token");
   const MAX_POSTER_FILE_SIZE = 1500 * 1024;
   const [user, setUser] = useState(() => {
@@ -48,7 +52,7 @@ function OrganizerDashboardPage() {
 
     async function loadProfile() {
       try {
-        const response = await fetch(`${API_BASE}/auth/me`, {
+        const response = await fetch(`${PAGE_API_BASE}/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -93,7 +97,7 @@ function OrganizerDashboardPage() {
     async function loadEvents() {
       try {
         setIsLoadingEvents(true);
-        const response = await fetch(`${API_BASE}/organizer/events`, {
+        const response = await fetch(`${PAGE_API_BASE}/organizer/events`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -187,7 +191,7 @@ function OrganizerDashboardPage() {
       setMessage({ type: "idle", text: "" });
 
       const isEditing = Number.isInteger(editingEventId);
-      const endpoint = isEditing ? `${API_BASE}/organizer/events/${editingEventId}` : `${API_BASE}/events`;
+      const endpoint = isEditing ? `${PAGE_API_BASE}/organizer/events/${editingEventId}` : `${PAGE_API_BASE}/events`;
       const method = isEditing ? "PATCH" : "POST";
 
       const response = await fetch(endpoint, {
@@ -233,7 +237,7 @@ function OrganizerDashboardPage() {
 
       setMessage({ type: "success", text: isEditing ? "Event updated successfully." : "Event created successfully." });
 
-      const reloadResponse = await fetch(`${API_BASE}/organizer/events`, {
+      const reloadResponse = await fetch(`${PAGE_API_BASE}/organizer/events`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -299,7 +303,7 @@ function OrganizerDashboardPage() {
 
     try {
       setLoadingRegistrationsFor(eventId);
-      const response = await fetch(`${API_BASE}/organizer/events/${eventId}/registrations`, {
+      const response = await fetch(`${PAGE_API_BASE}/organizer/events/${eventId}/registrations`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -331,7 +335,7 @@ function OrganizerDashboardPage() {
 
     try {
       setRequestingDeleteFor(eventId);
-      const response = await fetch(`${API_BASE}/organizer/events/${eventId}/delete-request`, {
+      const response = await fetch(`${PAGE_API_BASE}/organizer/events/${eventId}/delete-request`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -349,7 +353,7 @@ function OrganizerDashboardPage() {
       setMessage({ type: "success", text: data.message || "Deletion request sent for admin approval." });
       setDeleteReasonsByEvent((prev) => ({ ...prev, [eventId]: "" }));
 
-      const reloadResponse = await fetch(`${API_BASE}/organizer/events`, {
+      const reloadResponse = await fetch(`${PAGE_API_BASE}/organizer/events`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -381,19 +385,19 @@ function OrganizerDashboardPage() {
 
   if (isCheckingUser) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(140deg,#fbfdff,#e9f3ff)] p-6 text-[#1a2a3d]">
+      <div className={`min-h-screen p-6 ${isDark ? "bg-[linear-gradient(140deg,#09111b,#111d2d)] text-[#e8eef7]" : "bg-[linear-gradient(140deg,#fbfdff,#e9f3ff)] text-[#1a2a3d]"}`}>
         <p className="mx-auto max-w-[1200px] text-sm">Loading organizer workspace...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(140deg,#fbfdff,#e9f3ff)] p-3 md:p-6 text-[#1a2a3d]">
-      <div className="mx-auto w-full max-w-[1300px] rounded-[2rem] border border-[#cfdeeb] bg-[linear-gradient(180deg,#ffffff,#f5faff)] p-5 shadow-[0_22px_52px_rgba(26,49,74,0.12)] md:p-8">
+    <div className={`min-h-screen p-3 md:p-6 ${isDark ? "bg-[linear-gradient(140deg,#09111b,#111d2d)] text-[#e8eef7]" : "bg-[linear-gradient(140deg,#fbfdff,#e9f3ff)] text-[#1a2a3d]"}`}>
+      <div className={`mx-auto w-full max-w-[1300px] rounded-[2rem] border p-5 shadow-[0_22px_52px_rgba(26,49,74,0.12)] md:p-8 ${isDark ? "border-white/10 bg-[#0f1724]/95 shadow-[0_22px_52px_rgba(0,0,0,0.3)]" : "border-[#cfdeeb] bg-[linear-gradient(180deg,#ffffff,#f5faff)]"}`}>
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl font-semibold text-[#1a2a3d] md:text-4xl">Organizer Dashboard</h1>
-            <p className="mt-2 text-sm text-[#5f748a]">Welcome, {displayName}. Create and manage your campus events.</p>
+            <h1 className={`font-display text-3xl font-semibold md:text-4xl ${isDark ? "text-[#eef4fb]" : "text-[#1a2a3d]"}`}>Organizer Dashboard</h1>
+            <p className={`mt-2 text-sm ${isDark ? "text-[#aebfd3]" : "text-[#5f748a]"}`}>Welcome, {displayName}. Create and manage your campus events.</p>
           </div>
           <div className="flex gap-2">
             <a
