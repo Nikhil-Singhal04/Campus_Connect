@@ -1,10 +1,12 @@
 const { useState } = React;
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+function getThemeState() {
+  return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
+}
 const REQUIRE_EMAIL_OTP = false;
 
 function SignupPage() {
+  const { isDark } = getThemeState();
   const totalSteps = REQUIRE_EMAIL_OTP ? 5 : 4;
   const stepTitles = REQUIRE_EMAIL_OTP
     ? [
@@ -227,17 +229,7 @@ function SignupPage() {
       setIsBusy(true);
       setMessage({ text: "", type: "idle" });
 
-      const response = await fetch(`${API_BASE}/auth/otp/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email.trim().toLowerCase() })
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Could not send verification code.");
-        return;
-      }
+      await campusAPI.sendOTP(formData.email.trim().toLowerCase());
 
       setIsCodeSent(true);
       setIsEmailVerified(false);
@@ -267,20 +259,7 @@ function SignupPage() {
       setIsBusy(true);
       setMessage({ text: "", type: "idle" });
 
-      const response = await fetch(`${API_BASE}/auth/otp/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email.trim().toLowerCase(),
-          code: enteredCode
-        })
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Could not verify code.");
-        return;
-      }
+      const data = await campusAPI.verifyOTP(formData.email.trim().toLowerCase(), enteredCode);
 
       setIsEmailVerified(true);
       setSignupProofToken(data.signupProofToken || "");
@@ -305,29 +284,19 @@ function SignupPage() {
       setIsBusy(true);
       setMessage({ text: "", type: "idle" });
 
-      const response = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          signupProofToken: REQUIRE_EMAIL_OTP ? signupProofToken : null,
-          accountType: formData.accountType,
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          regNo: formData.regNo.trim(),
-          department: formData.department,
-          programOrUnit: formData.programOrUnit.trim(),
-          yearOrDesignation: formData.yearOrDesignation.trim(),
-          email: formData.email.trim().toLowerCase(),
-          username: formData.username.trim().toLowerCase(),
-          password: formData.password
-        })
+      await campusAPI.register({
+        signupProofToken: REQUIRE_EMAIL_OTP ? signupProofToken : null,
+        accountType: formData.accountType,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        regNo: formData.regNo.trim(),
+        department: formData.department,
+        programOrUnit: formData.programOrUnit.trim(),
+        yearOrDesignation: formData.yearOrDesignation.trim(),
+        email: formData.email.trim().toLowerCase(),
+        username: formData.username.trim().toLowerCase(),
+        password: formData.password
       });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Could not complete signup.");
-        return;
-      }
 
       setSuccess("Signup completed successfully. Your account has been created.");
       setStep(1);
@@ -364,16 +333,16 @@ function SignupPage() {
       : "text-[#9fb4dd]";
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(140deg,#fbfdff,#e9f3ff)] p-3 md:p-6">
-      <div className="mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1200px] overflow-hidden rounded-[2rem] border border-[#cfdeeb] shadow-[0_22px_52px_rgba(26,49,74,0.12)] lg:grid-cols-2">
+    <div className={`min-h-screen p-3 md:p-6 ${isDark ? "bg-[linear-gradient(140deg,#09111b,#111d2d)] text-[#e8eef7]" : "bg-[linear-gradient(140deg,#fbfdff,#e9f3ff)] text-[#1f3149]"}`}>
+      <div className={`mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1200px] overflow-hidden rounded-[2rem] border shadow-[0_22px_52px_rgba(26,49,74,0.12)] lg:grid-cols-2 ${isDark ? "border-white/10 bg-[#0f1724]/95 shadow-[0_22px_52px_rgba(0,0,0,0.3)]" : "border-[#cfdeeb] bg-white"}`}>
         <section className="relative">
           <img
             src="signup-hero.svg"
             alt="Students walking on a university campus"
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,11,24,0.1),rgba(7,11,24,0.78))]" />
-          <div className="absolute left-0 right-0 top-0 flex min-h-[92px] items-center overflow-hidden bg-[#5fd8cf] px-6 py-2 shadow-[0_7px_0_0_#5fd8cf] md:min-h-[110px] md:px-10 md:shadow-[0_9px_0_0_#5fd8cf] animate-fadeUp">
+          <div className={`absolute inset-0 ${isDark ? "bg-[linear-gradient(180deg,rgba(7,11,24,0.22),rgba(7,11,24,0.92))]" : "bg-[linear-gradient(180deg,rgba(7,11,24,0.1),rgba(7,11,24,0.78))]"}`} />
+          <div className={`absolute left-0 right-0 top-0 flex min-h-[92px] items-center overflow-hidden px-6 py-2 shadow-[0_7px_0_0_#5fd8cf] md:min-h-[110px] md:px-10 md:shadow-[0_9px_0_0_#5fd8cf] animate-fadeUp ${isDark ? "bg-[#13253a] shadow-[0_7px_0_0_#13253a] md:shadow-[0_9px_0_0_#13253a]" : "bg-[#5fd8cf]"}`}>
             <div
               className="absolute inset-0"
               style={{
@@ -392,22 +361,22 @@ function SignupPage() {
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 animate-fadeUp">
             <h1 className="mt-2 max-w-[16ch] font-display text-4xl leading-tight md:text-5xl">Create your account and join the campus event network.</h1>
-            <p className="mt-4 max-w-[50ch] text-sm text-[#d6e6ff] md:text-base">
+            <p className={`mt-4 max-w-[50ch] text-sm md:text-base ${isDark ? "text-[#c6d6ea]" : "text-[#d6e6ff]"}`}>
               Discover events, register instantly, and stay updated with one unified platform.
             </p>
           </div>
         </section>
 
-        <section className="flex min-h-0 flex-col bg-[linear-gradient(180deg,#ffffff,#f5faff)] p-5 md:p-8">
+        <section className={`flex min-h-0 flex-col p-5 md:p-8 ${isDark ? "bg-[linear-gradient(180deg,#101a2a,#0d1724)]" : "bg-[linear-gradient(180deg,#ffffff,#f5faff)]"}`}>
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="font-display text-xl font-semibold text-[#1a2a3d]">Sign up</p>
-              <p className="text-sm text-[#5f748a]">Step {step} of {totalSteps}: {stepTitles[step - 1]}</p>
+              <p className={`font-display text-xl font-semibold ${isDark ? "text-[#eef4fb]" : "text-[#1a2a3d]"}`}>Sign up</p>
+              <p className={`text-sm ${isDark ? "text-[#aebfd3]" : "text-[#5f748a]"}`}>Step {step} of {totalSteps}: {stepTitles[step - 1]}</p>
             </div>
-            <a href="index.html" className="text-sm text-[#0e8f84] underline underline-offset-4 hover:text-[#0d7a72]">Home</a>
+            <a href="index.html" className={`text-sm underline underline-offset-4 ${isDark ? "text-[#89ece0] hover:text-white" : "text-[#0e8f84] hover:text-[#0d7a72]"}`}>Home</a>
           </div>
 
-          <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-[#22355f]">
+          <div className={`mb-4 h-2 w-full overflow-hidden rounded-full ${isDark ? "bg-[#17263a]" : "bg-[#22355f]"}`}>
             <div
               className="h-full rounded-full bg-[linear-gradient(90deg,#27d1a6,#6ee7ff)] transition-all duration-500"
               style={{ width: `${(step / totalSteps) * 100}%` }}
