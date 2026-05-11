@@ -154,7 +154,7 @@ function SettingsPage() {
   }, [token]);
 
   useEffect(() => {
-    document.documentElement.dataset.ccTheme = settings.appearance.theme;
+    window.CampusConnectTheme?.applyThemePreference?.(settings.appearance.theme);
     document.documentElement.dataset.ccSpacing = settings.appearance.spacing;
     document.documentElement.dataset.ccReduceMotion = settings.accessibility.reduceMotion ? "true" : "false";
     document.documentElement.dataset.ccHighContrast = settings.accessibility.highContrast ? "true" : "false";

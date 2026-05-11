@@ -8,6 +8,10 @@ const EVENT_TYPES = ["All", "Coding", "Marketing", "Public Speaking", "Cultural"
 const EXTRA_PROFILE_KEY = "cc_profile_extra";
 const SETTINGS_KEY = "cc_user_settings";
 
+function getThemeState() {
+  return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
+}
+
 function getFallbackEventImage() {
   return "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80";
 }
@@ -31,6 +35,7 @@ function readSavedSettings() {
 }
 
 function DashboardPage() {
+  const { isDark } = getThemeState();
   const token = localStorage.getItem("cc_token");
   const [user, setUser] = useState(() => {
     const rawUser = localStorage.getItem("cc_user");
@@ -285,8 +290,8 @@ function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(140deg,#f9fcff,#e9f4ff)] p-3 md:p-6">
-        <div className="mx-auto max-w-[1200px] rounded-3xl border border-[#cfe0ee] bg-[linear-gradient(180deg,#ffffff,#f5faff)] px-5 py-8 text-[#5a6f86] shadow-[0_16px_36px_rgba(30,53,79,0.1)] md:px-8">
+      <div className={`min-h-screen p-3 md:p-6 ${isDark ? "bg-[linear-gradient(140deg,#09111b,#111d2d)] text-[#e8eef7]" : "bg-[linear-gradient(140deg,#f9fcff,#e9f4ff)] text-[#1f3149]"}`}>
+        <div className={`mx-auto max-w-[1200px] rounded-3xl border px-5 py-8 shadow-[0_16px_36px_rgba(30,53,79,0.1)] md:px-8 ${isDark ? "border-white/10 bg-[#0f1724]/95 text-[#d9e6f4] shadow-[0_16px_36px_rgba(0,0,0,0.28)]" : "border-[#cfe0ee] bg-[linear-gradient(180deg,#ffffff,#f5faff)] text-[#5a6f86]"}`}>
           Loading dashboard...
         </div>
       </div>
@@ -294,9 +299,9 @@ function DashboardPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#f7fbff_0%,#eef6ff_36%,#e9f4ff_100%)] flex flex-col text-[#1f3149]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,255,255,0))]" />
-      <header className="relative z-30 border-b border-[#d7e5f1] bg-white/80 backdrop-blur-md shadow-[0_10px_30px_rgba(30,53,79,0.06)]">
+    <div className={`relative min-h-screen overflow-hidden flex flex-col ${isDark ? "bg-[radial-gradient(circle_at_top_left,#09111b_0%,#0f1724_36%,#111d2d_100%)] text-[#e8eef7]" : "bg-[radial-gradient(circle_at_top_left,#f7fbff_0%,#eef6ff_36%,#e9f4ff_100%)] text-[#1f3149]"}`}>
+      <div className={`pointer-events-none absolute inset-x-0 top-0 h-64 ${isDark ? "bg-[linear-gradient(180deg,rgba(15,23,36,0.95),rgba(15,23,36,0))]" : "bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,255,255,0))]"}`} />
+      <header className={`relative z-30 border-b backdrop-blur-md shadow-[0_10px_30px_rgba(30,53,79,0.06)] ${isDark ? "border-white/10 bg-[#0f1724]/80 shadow-[0_10px_30px_rgba(0,0,0,0.26)]" : "border-[#d7e5f1] bg-white/80"}`}>
         <div className="mx-auto max-w-[1400px] px-5 py-3 md:px-8 md:py-4">
           <div className="flex flex-wrap items-center gap-3 md:gap-4">
             <div className="flex items-center gap-3">
@@ -310,7 +315,9 @@ function DashboardPage() {
                   className={`px-4 py-2 rounded-full text-sm font-semibold tracking-[0.01em] transition duration-200 shadow-sm ${
                     selectedDept === dept
                       ? "bg-[#0e8f84] text-white shadow-[0_10px_20px_rgba(14,143,132,0.24)]"
-                      : "bg-white text-[#1f3149] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5faff]"
+                      : isDark
+                        ? "bg-white/5 text-[#e8eef7] border border-white/10 hover:border-white/20 hover:bg-white/10"
+                        : "bg-white text-[#1f3149] border border-[#d5e2ef] hover:border-[#bcd4e7] hover:bg-[#f5faff]"
                   }`}
                 >
                   {dept}
@@ -324,7 +331,7 @@ function DashboardPage() {
                 aria-expanded={isProfileMenuOpen}
                 aria-haspopup="menu"
                 onClick={() => setIsProfileMenuOpen(prev => !prev)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#c9d8e7] bg-white text-[#1f3149] shadow-sm transition hover:border-[#0ea59699] hover:text-[#0e8f84]"
+                className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-sm transition ${isDark ? "border-white/10 bg-white/5 text-[#e8eef7] hover:border-white/20 hover:bg-white/10" : "border-[#c9d8e7] bg-white text-[#1f3149] hover:border-[#0ea59699] hover:text-[#0e8f84]"}`}
               >
                 {profileImage ? (
                   <img

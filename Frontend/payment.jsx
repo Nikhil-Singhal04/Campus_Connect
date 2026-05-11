@@ -3,6 +3,10 @@ const { useEffect, useMemo, useState } = React;
 const API_HOST = window.location.hostname || "127.0.0.1";
 const API_BASE = `http://${API_HOST}:4000/api`;
 
+function getThemeState() {
+  return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
+}
+
 function getPendingRegistrationKey(eventId) {
   return `cc_pending_registration_${eventId}`;
 }
@@ -28,6 +32,7 @@ function parseDraftFromQuery(eventId) {
 }
 
 function PaymentPage() {
+  const { isDark } = getThemeState();
   const token = localStorage.getItem("cc_token");
   const [eventData, setEventData] = useState(null);
   const [pendingRegistration, setPendingRegistration] = useState(null);
@@ -190,8 +195,8 @@ function PaymentPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-[960px] px-4 py-10 md:px-8">
-        <div className="rounded-3xl border border-[#d2e2ef] bg-white px-6 py-10 text-[#5a6f86] shadow-[0_16px_34px_rgba(30,53,79,0.08)]">
+      <div className={`mx-auto max-w-[960px] px-4 py-10 md:px-8 ${isDark ? "text-[#e8eef7]" : ""}`}>
+        <div className={`rounded-3xl border px-6 py-10 shadow-[0_16px_34px_rgba(30,53,79,0.08)] ${isDark ? "border-white/10 bg-[#0f1724]/95 text-[#d9e6f4] shadow-[0_16px_34px_rgba(0,0,0,0.24)]" : "border-[#d2e2ef] bg-white text-[#5a6f86]"}`}>
           Loading payment details...
         </div>
       </div>
@@ -199,20 +204,20 @@ function PaymentPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[960px] px-4 py-7 md:px-8 md:py-10">
+    <div className={`mx-auto max-w-[960px] px-4 py-7 md:px-8 md:py-10 ${isDark ? "text-[#e8eef7]" : ""}`}>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <a
           href={eventId ? `event-register.html?id=${eventId}` : "dashboard.html"}
-          className="rounded-full border border-[#c8d9e8] bg-white px-4 py-2 text-sm font-semibold text-[#1f3149] transition hover:border-[#0ea59699] hover:text-[#0e8f84]"
+          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${isDark ? "border-white/10 bg-white/5 text-[#eef4fb] hover:border-white/20 hover:text-white" : "border-[#c8d9e8] bg-white text-[#1f3149] hover:border-[#0ea59699] hover:text-[#0e8f84]"}`}
         >
           Back to Registration
         </a>
-        <p className="text-sm text-[#5a6f86]">Event Payment Step</p>
+        <p className={`text-sm ${isDark ? "text-[#aebfd3]" : "text-[#5a6f86]"}`}>Event Payment Step</p>
       </header>
 
-      <div className="rounded-[1.8rem] border border-[#d6e4f0] bg-white p-6 shadow-[0_16px_36px_rgba(30,53,79,0.08)] md:p-7">
-        <h1 className="font-display text-3xl font-semibold text-[#142538]">Complete Payment</h1>
-        <p className="mt-2 text-[#516880]">Confirm payment details to finalize your registration.</p>
+      <div className={`rounded-[1.8rem] border p-6 shadow-[0_16px_36px_rgba(30,53,79,0.08)] md:p-7 ${isDark ? "border-white/10 bg-[#0f1724]/95 shadow-[0_16px_36px_rgba(0,0,0,0.24)]" : "border-[#d6e4f0] bg-white"}`}>
+        <h1 className={`font-display text-3xl font-semibold ${isDark ? "text-[#eef4fb]" : "text-[#142538]"}`}>Complete Payment</h1>
+        <p className={`mt-2 ${isDark ? "text-[#aebfd3]" : "text-[#516880]"}`}>Confirm payment details to finalize your registration.</p>
 
         <div className="mt-4 rounded-2xl border border-[#d8e6f2] bg-[linear-gradient(135deg,#f5fbff,#ebf6ff)] p-4 text-sm text-[#4d637a]">
           <p><span className="font-semibold text-[#1f3149]">Event:</span> {eventData?.title || "-"}</p>
