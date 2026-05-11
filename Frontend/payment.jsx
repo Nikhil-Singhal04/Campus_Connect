@@ -156,29 +156,15 @@ function PaymentPage() {
 
     try {
       setIsSubmitting(true);
-
-      const response = await fetch(`${PAGE_API_BASE}/events/${registrationEventId}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: String(pendingRegistration.name || "").trim(),
-          email: String(pendingRegistration.email || "").trim(),
-          phone: String(pendingRegistration.phone || "").trim(),
-          year: String(pendingRegistration.year || "").trim(),
-          notes: String(pendingRegistration.notes || "").trim(),
-          pricingLabel: String(pendingRegistration.pricingLabel || "").trim() || "Free Entry",
-          paymentPath: paymentPath.trim()
-        })
+      await campusAPI.registerForEvent(registrationEventId, {
+        name: String(pendingRegistration.name || "").trim(),
+        email: String(pendingRegistration.email || "").trim(),
+        phone: String(pendingRegistration.phone || "").trim(),
+        year: String(pendingRegistration.year || "").trim(),
+        notes: String(pendingRegistration.notes || "").trim(),
+        pricingLabel: String(pendingRegistration.pricingLabel || "").trim() || "Free Entry",
+        paymentPath: paymentPath.trim()
       });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setStatus({ type: "error", text: data.message || "Could not complete payment registration." });
-        return;
-      }
 
       sessionStorage.removeItem(getPendingRegistrationKey(registrationEventId));
       localStorage.removeItem(getPendingRegistrationKey(registrationEventId));
