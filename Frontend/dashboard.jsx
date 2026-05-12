@@ -67,7 +67,6 @@ function DashboardPage() {
 
   useEffect(() => {
     let mounted = true;
-
     async function loadProfile() {
       if (isAdminSession) {
         if (mounted) {
@@ -78,25 +77,16 @@ function DashboardPage() {
       }
 
       try {
-        const response = await fetch(`${PAGE_API_BASE}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const userData = await campusAPI.getMe();
 
-        if (!response.ok) {
-          throw new Error("Unauthorized");
-        }
-
-        const data = await response.json();
         if (mounted) {
-          const normalizedType = String(data?.user?.accountType || "").toLowerCase();
+          const normalizedType = String(userData?.accountType || "").toLowerCase();
           if (normalizedType === "organizer") {
             window.location.href = "organiser.html";
             return;
           }
-          setUser(data.user || {});
-          localStorage.setItem("cc_user", JSON.stringify(data.user || {}));
+          setUser(userData || {});
+          localStorage.setItem("cc_user", JSON.stringify(userData || {}));
         }
       } catch (_error) {
         localStorage.removeItem("cc_token");
@@ -120,15 +110,13 @@ function DashboardPage() {
 
     async function loadEvents() {
       try {
-        const params = new URLSearchParams();
-        if (selectedDept !== "All") params.append("department", selectedDept);
-        if (selectedEventType !== "All") params.append("eventType", selectedEventType);
+        const filters = {};
+        if (selectedDept !== "All") filters.department = selectedDept;
+        if (selectedEventType !== "All") filters.eventType = selectedEventType;
 
-        const response = await fetch(`${PAGE_API_BASE}/events?${params.toString()}`);
-        const data = await response.json();
-
-        if (mounted && Array.isArray(data.events)) {
-          setEvents(data.events);
+        const eventsList = await campusAPI.listEvents(filters);
+        if (mounted && Array.isArray(eventsList)) {
+          setEvents(eventsList);
         }
       } catch (_error) {
         console.error("Load events error:", _error);
@@ -155,20 +143,7 @@ function DashboardPage() {
 
       try {
         setIsLoadingMyRegistrations(true);
-        const response = await fetch(`${PAGE_API_BASE}/me/registrations`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const data = await response.json().catch(() => ({ registrations: [] }));
-
-        if (!response.ok) {
-          if (mounted) {
-            setMyRegistrations([]);
-          }
-          return;
-        }
-
+        const data = await campusAPI.getMyRegistrations();
         if (mounted) {
           setMyRegistrations(Array.isArray(data.registrations) ? data.registrations : []);
         }
@@ -255,13 +230,14 @@ function DashboardPage() {
       const params = new URLSearchParams();
       if (selectedDept !== "All") params.append("department", selectedDept);
       if (selectedEventType !== "All") params.append("eventType", selectedEventType);
+      const filters = {};
+      if (selectedDept !== "All") filters.department = selectedDept;
+      if (selectedEventType !== "All") filters.eventType = selectedEventType;
 
-      const response = await fetch(`${PAGE_API_BASE}/events?${params.toString()}`);
-      const data = await response.json();
-
-      if (Array.isArray(data.events)) {
-        setEvents(data.events);
-        console.log("Events reloaded:", data.events.length);
+      const eventsList = await campusAPI.listEvents(filters);
+      if (Array.isArray(eventsList)) {
+        setEvents(eventsList);
+        console.log("Events reloaded:", eventsList.length);
       }
     } catch (error) {
       console.error("Reload events error:", error);

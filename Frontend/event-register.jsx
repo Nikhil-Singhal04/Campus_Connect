@@ -141,17 +141,7 @@ function EventRegistrationPage() {
       if (!eventData?.id) return;
 
       try {
-        const response = await fetch(`${PAGE_API_BASE}/me/registrations`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const data = await response.json().catch(() => ({ registrations: [] }));
-
-        if (!response.ok) {
-          return;
-        }
-
+        const data = await campusAPI.getMyRegistrations();
         const registrations = Array.isArray(data.registrations) ? data.registrations : [];
         const exists = registrations.some((registration) => String(registration.eventId) === String(eventData.id));
 
@@ -254,16 +244,9 @@ function EventRegistrationPage() {
       .map((member, index) => `Member ${index + 2}: ${member.name.trim()} (Reg No: ${member.regNo.trim()})`)
       .join(" | ");
 
-    try {
-      setIsSubmitting(true);
-
-      const response = await fetch(`${PAGE_API_BASE}/events/${eventData.id}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
+      try {
+        setIsSubmitting(true);
+        await campusAPI.registerForEvent(eventData.id, {
           name: formData.name.trim(),
           email: formData.email.trim(),
           phone: formData.phone.trim(),
@@ -275,27 +258,15 @@ function EventRegistrationPage() {
             regNo: member.regNo.trim()
           })),
           pricingLabel
-        })
-      });
+        });
 
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        if (response.status === 409) {
-          setAlreadyRegistered(true);
-          setStatus({ type: "info", text: data.message || "You are already registered for this event." });
-          return;
-        }
-        setStatus({ type: "error", text: data.message || "Could not complete registration right now." });
-        return;
+        setAlreadyRegistered(true);
+        setStatus({ type: "success", text: "You are successfully registered for this event." });
+      } catch (err) {
+        setStatus({ type: "error", text: err?.message || "Network issue while submitting registration." });
+      } finally {
+        setIsSubmitting(false);
       }
-
-      setAlreadyRegistered(true);
-      setStatus({ type: "success", text: "You are successfully registered for this event." });
-    } catch (_error) {
-      setStatus({ type: "error", text: "Network issue while submitting registration." });
-    } finally {
-      setIsSubmitting(false);
-    }
   }
 
   if (isLoading) {
