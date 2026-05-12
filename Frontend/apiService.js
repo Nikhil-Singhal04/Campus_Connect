@@ -352,6 +352,17 @@ class CampusConnectAPI {
   }
 
   /**
+   * Get registrations for a specific event (admin)
+   */
+  async getAdminEventRegistrations(eventId) {
+    const response = await this.request(`/admin/events/${eventId}/registrations`);
+    return {
+      registrations: response.registrations,
+      count: response.count
+    };
+  }
+
+  /**
    * Approve event (admin)
    */
   async approveEvent(eventId) {
