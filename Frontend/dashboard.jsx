@@ -654,6 +654,7 @@ function DashboardPage() {
           </div>
       </div>
       </footer>
+      <ChatbotWidget />
     </div>
   );
 }

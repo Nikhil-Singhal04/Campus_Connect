@@ -412,6 +412,18 @@ class CampusConnectAPI {
     return response;
   }
 
+  // ============ Chatbot Endpoints ============
+
+  /**
+   * Send message to Campus Connect assistant
+   */
+  async sendChatMessage(message, history = []) {
+    return this.request("/chat", {
+      method: "POST",
+      body: JSON.stringify({ message, history })
+    });
+  }
+
   // ============ Health Check ============
 
   /**

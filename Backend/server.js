@@ -15,6 +15,7 @@ dotenv.config();
 const { Resend } = require("resend");
 const { pool, run, get, all, close } = require("./db");
 const { initializeDatabase } = require("./init-db");
+const chatRouter = require("./routes/chat");
 
 const {
   PORT = 4000,
@@ -139,6 +140,7 @@ const adminLimiter = rateLimit({
 });
 
 app.use(globalLimiter);
+app.use("/api/chat", chatRouter);
 
 function hashOtp(code) {
   return crypto.createHash("sha256").update(`${code}:${OTP_PEPPER}`).digest("hex");

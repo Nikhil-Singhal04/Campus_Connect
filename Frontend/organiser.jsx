@@ -1,4 +1,4 @@
-const { useEffect, useMemo, useState } = React;
+const { useEffect, useMemo, useRef, useState } = React;
 
 const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
 
@@ -29,6 +29,8 @@ function OrganizerDashboardPage() {
   const [registrationsByEvent, setRegistrationsByEvent] = useState({});
   const [deleteReasonsByEvent, setDeleteReasonsByEvent] = useState({});
   const [requestingDeleteFor, setRequestingDeleteFor] = useState(null);
+  const dateInputRef = useRef(null);
+  const timeInputRef = useRef(null);
   const [formData, setFormData] = useState({
     title: "",
     eventType: "Workshop",
@@ -409,24 +411,56 @@ function OrganizerDashboardPage() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="text-sm text-[#24344a]">
                   Date
-                  <input
-                    className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-white px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInput}
-                  />
+                  <div className="relative mt-2">
+                    <input
+                      ref={dateInputRef}
+                      className="w-full rounded-xl border border-[#d2dfeb] bg-white px-3 py-3 pr-10 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                      type="date"
+                      name="date"
+                      value={formData.date}
+                      onChange={handleInput}
+                      onFocus={(event) => event.target.showPicker?.()}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.focus()}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#6a7f96] transition hover:text-[#0ea596]"
+                      aria-label="Pick a date"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </button>
+                  </div>
                 </label>
 
                 <label className="text-sm text-[#24344a]">
                   Time
-                  <input
-                    className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-white px-3 py-3 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
-                    type="time"
-                    name="time"
-                    value={formData.time}
-                    onChange={handleInput}
-                  />
+                  <div className="relative mt-2">
+                    <input
+                      ref={timeInputRef}
+                      className="w-full rounded-xl border border-[#d2dfeb] bg-white px-3 py-3 pr-10 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                      type="time"
+                      name="time"
+                      value={formData.time}
+                      onChange={handleInput}
+                      onFocus={(event) => event.target.showPicker?.()}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => timeInputRef.current?.showPicker?.() || timeInputRef.current?.focus()}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#6a7f96] transition hover:text-[#0ea596]"
+                      aria-label="Pick a time"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 7v5l3 2" />
+                      </svg>
+                    </button>
+                  </div>
                 </label>
               </div>
 
@@ -654,6 +688,7 @@ function OrganizerDashboardPage() {
           </section>
         </div>
       </div>
+      <ChatbotWidget />
     </div>
   );
 }
