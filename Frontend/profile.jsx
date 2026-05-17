@@ -1,15 +1,20 @@
 const { useEffect, useRef, useState } = React;
 
 const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
-const EXTRA_PROFILE_KEY = "cc_profile_extra";
+const EXTRA_PROFILE_KEY_PREFIX = "cc_profile_extra";
 
 function getThemeState() {
   return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
 }
 
-function readExtraProfile() {
+function getExtraProfileKey(user) {
+  const id = user?.id || user?.email || user?.username || "guest";
+  return `${EXTRA_PROFILE_KEY_PREFIX}_${id}`;
+}
+
+function readExtraProfile(user) {
   try {
-    const raw = localStorage.getItem(EXTRA_PROFILE_KEY);
+    const raw = localStorage.getItem(getExtraProfileKey(user));
     return raw ? JSON.parse(raw) : {};
   } catch (_error) {
     return {};
@@ -93,7 +98,7 @@ function ProfilePage() {
   }, [token]);
 
   useEffect(() => {
-    const extra = readExtraProfile();
+    const extra = readExtraProfile(user);
     setProfileForm({
       firstName: user.firstName || "",
       lastName: user.lastName || "",
@@ -310,12 +315,12 @@ function ProfilePage() {
 
       setProfileForm((prev) => ({ ...prev, profileImage: encoded }));
 
-      const extra = readExtraProfile();
+      const extra = readExtraProfile(user);
       const nextExtra = {
         ...extra,
         profileImage: encoded
       };
-      localStorage.setItem(EXTRA_PROFILE_KEY, JSON.stringify(nextExtra));
+      localStorage.setItem(getExtraProfileKey(user), JSON.stringify(nextExtra));
       setSaveMessage("Profile picture updated for this device.");
     };
 
@@ -358,7 +363,7 @@ function ProfilePage() {
 
     setUser(updatedUser);
     localStorage.setItem("cc_user", JSON.stringify(updatedUser));
-    localStorage.setItem(EXTRA_PROFILE_KEY, JSON.stringify(extraProfile));
+    localStorage.setItem(getExtraProfileKey(user), JSON.stringify(extraProfile));
     setSaveMessage("Profile saved for this device.");
     setEditingAbout(false);
     setEditingPersonal(false);

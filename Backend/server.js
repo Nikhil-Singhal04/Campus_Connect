@@ -16,6 +16,7 @@ const { Resend } = require("resend");
 const { pool, run, get, all, close } = require("./db");
 const { initializeDatabase } = require("./init-db");
 const chatRouter = require("./routes/chat");
+const { sendRegistrationNotifications } = require("./services/notificationService");
 
 const {
   PORT = 4000,
@@ -657,6 +658,23 @@ app.post("/api/events/:id/register", authLimiter, async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [eventId, user.id, fullName, email, phone, yearOrDesignation, notes, pricingLabel, paymentPath || null, Date.now()]
     );
+
+    try {
+      await sendRegistrationNotifications({
+        resend,
+        fullName,
+        email,
+        event: {
+          title: event.title,
+          date: event.date,
+          time: event.time,
+          location: event.location
+        },
+        pricingLabel
+      });
+    } catch (notifyError) {
+      console.error("Registration notification error:", notifyError);
+    }
 
     return res.status(201).json({
       message: "Registration successful.",
