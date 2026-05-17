@@ -226,6 +226,7 @@ function App() {
           <p>&copy; {new Date().getFullYear()} Campus Connect. All rights reserved.</p>
         </div>
       </footer>
+      <ChatbotWidget />
     </div>
   );
 }

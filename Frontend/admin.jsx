@@ -899,6 +899,7 @@ function AdminPortalPage({ token, onLogout }) {
           </section>
         </div>
       </div>
+      <ChatbotWidget />
     </div>
   );
 }
