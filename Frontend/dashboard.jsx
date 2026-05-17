@@ -5,7 +5,7 @@ const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hos
 const DEPARTMENTS = ["All", "CSE", "Civil", "MBA", "Agriculture"];
 const EVENT_TYPES = ["All", "Coding", "Marketing", "Public Speaking", "Cultural", "Workshop", "Seminar"];
 const ADMIN_TOKEN_KEY = "cc_admin_token";
-const EXTRA_PROFILE_KEY = "cc_profile_extra";
+const EXTRA_PROFILE_KEY_PREFIX = "cc_profile_extra";
 const SETTINGS_KEY = "cc_user_settings";
 
 function getThemeState() {
@@ -16,9 +16,14 @@ function getFallbackEventImage() {
   return "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80";
 }
 
-function readExtraProfile() {
+function getExtraProfileKey(user) {
+  const id = user?.id || user?.email || user?.username || "guest";
+  return `${EXTRA_PROFILE_KEY_PREFIX}_${id}`;
+}
+
+function readExtraProfile(user) {
   try {
-    const raw = localStorage.getItem(EXTRA_PROFILE_KEY);
+    const raw = localStorage.getItem(getExtraProfileKey(user));
     return raw ? JSON.parse(raw) : {};
   } catch (_error) {
     return {};
@@ -209,9 +214,9 @@ function DashboardPage() {
   }, [user.firstName, user.lastName, user.username]);
 
   const profileImage = useMemo(() => {
-    const extra = readExtraProfile();
+    const extra = readExtraProfile(user);
     return String(extra.profileImage || "").trim();
-  }, []);
+  }, [user.id, user.email, user.username]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();

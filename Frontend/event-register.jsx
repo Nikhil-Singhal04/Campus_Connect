@@ -457,7 +457,9 @@ function EventRegistrationPage() {
                   : "bg-[linear-gradient(135deg,#169f91,#36cfc0)] hover:-translate-y-0.5 hover:brightness-105"
               }`}
             >
-              {alreadyRegistered
+              {status.type === "success"
+                ? "Registered Successfully"
+                : alreadyRegistered
                 ? "Already Registered"
                 : isSubmitting
                 ? "Submitting..."

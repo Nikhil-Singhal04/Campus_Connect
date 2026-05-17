@@ -332,6 +332,17 @@ function OrganizerDashboardPage() {
 
   return (
     <div className={`min-h-screen p-3 md:p-6 ${isDark ? "bg-[linear-gradient(140deg,#09111b,#111d2d)] text-[#e8eef7]" : "bg-[linear-gradient(140deg,#fbfdff,#e9f3ff)] text-[#1a2a3d]"}`}>
+      <style>{`
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+          opacity: 0;
+          display: none;
+        }
+        input[type="date"]::-webkit-inner-spin-button,
+        input[type="time"]::-webkit-inner-spin-button {
+          display: none;
+        }
+      `}</style>
       <div className={`mx-auto w-full max-w-[1300px] rounded-[2rem] border p-5 shadow-[0_22px_52px_rgba(26,49,74,0.12)] md:p-8 ${isDark ? "border-white/10 bg-[#0f1724]/95 shadow-[0_22px_52px_rgba(0,0,0,0.3)]" : "border-[#cfdeeb] bg-[linear-gradient(180deg,#ffffff,#f5faff)]"}`}>
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -414,7 +425,7 @@ function OrganizerDashboardPage() {
                   <div className="relative mt-2">
                     <input
                       ref={dateInputRef}
-                      className="w-full rounded-xl border border-[#d2dfeb] bg-white px-3 py-3 pr-10 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                      className="w-full appearance-none rounded-xl border border-[#d2dfeb] bg-white px-3 py-3 pr-10 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
                       type="date"
                       name="date"
                       value={formData.date}
@@ -442,7 +453,7 @@ function OrganizerDashboardPage() {
                   <div className="relative mt-2">
                     <input
                       ref={timeInputRef}
-                      className="w-full rounded-xl border border-[#d2dfeb] bg-white px-3 py-3 pr-10 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                      className="w-full appearance-none rounded-xl border border-[#d2dfeb] bg-white px-3 py-3 pr-10 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
                       type="time"
                       name="time"
                       value={formData.time}

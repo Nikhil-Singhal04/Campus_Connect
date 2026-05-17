@@ -2,6 +2,7 @@ const { useEffect, useState } = React;
 
 const PAGE_API_BASE = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
 const SETTINGS_KEY = "cc_user_settings";
+const EXTRA_PROFILE_KEY_PREFIX = "cc_profile_extra";
 const DEPARTMENTS = ["All", "CSE", "Civil", "MBA", "Agriculture"];
 const NAV_ITEMS = [
   { id: "notifications", label: "Notifications" },
@@ -79,6 +80,11 @@ function readSettings() {
   } catch (_error) {
     return defaults;
   }
+}
+
+function getExtraProfileKey(user) {
+  const id = user?.id || user?.email || user?.username || "guest";
+  return `${EXTRA_PROFILE_KEY_PREFIX}_${id}`;
 }
 
 function SettingsPage() {
@@ -271,6 +277,7 @@ function SettingsPage() {
     localStorage.removeItem("cc_token");
     localStorage.removeItem("cc_user");
     localStorage.removeItem(SETTINGS_KEY);
+    localStorage.removeItem(getExtraProfileKey(user));
     localStorage.removeItem("cc_profile_extra");
     window.location.href = "signin.html";
   }
@@ -286,6 +293,8 @@ function SettingsPage() {
   function signOut() {
     localStorage.removeItem("cc_token");
     localStorage.removeItem("cc_user");
+    localStorage.removeItem(getExtraProfileKey(user));
+    localStorage.removeItem("cc_profile_extra");
     window.location.href = "signin.html";
   }
 
