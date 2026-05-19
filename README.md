@@ -39,6 +39,8 @@ Campus Connect is a full-stack web application designed to enhance communication
 - JWT Authentication
 - REST API
 - Git & GitHub
+- Docker & Jenkins (CI/CD)
+- Terraform (IaC)
 
 ---
 
@@ -47,13 +49,10 @@ Campus Connect is a full-stack web application designed to enhance communication
 ```bash
 Campus_Connect/
 │
-├── client/              # Frontend source code
-├── server/              # Backend source code
-├── routes/              # API routes
-├── controllers/         # Business logic
-├── models/              # Database models
-├── middleware/          # Authentication middleware
-├── public/              # Static assets
+├── Frontend/            # Frontend source code
+├── Backend/             # Backend source code
+├── terraform/           # Terraform infrastructure files
+├── Jenkinsfile          # Jenkins CI/CD pipeline
 ├── package.json
 └── README.md
 ```
@@ -79,14 +78,14 @@ cd Campus_Connect
 ### Install Backend Dependencies
 
 ```bash
-cd server
+cd Backend
 npm install
 ```
 
 ### Install Frontend Dependencies
 
 ```bash
-cd client
+cd Frontend
 npm install
 ```
 
@@ -97,14 +96,14 @@ npm install
 ## Start Backend Server
 
 ```bash
-cd server
+cd Backend
 npm start
 ```
 
 ## Start Frontend Server
 
 ```bash
-cd client
+cd Frontend
 npm start
 ```
 
@@ -154,6 +153,7 @@ Add screenshots of your project here.
 - 📱 Mobile Application
 - 🤖 AI-Based Recommendations
 - 🎥 Video Calling Integration
+- 📅 Event Management System
 - 🧠 Smart Notifications
 - ☁️ Cloud Deployment
 
@@ -200,5 +200,3 @@ This project is licensed under the MIT License.
 
 📌 GitHub Repository:  
 https://github.com/Nikhil-Singhal04/Campus_Connect
-
----
