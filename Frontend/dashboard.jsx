@@ -324,6 +324,10 @@ function DashboardPage() {
                 </button>
               ))}
             </div>
+            <div className="flex items-center gap-2">
+              <a href="connectx.html" className="hidden md:inline-flex items-center rounded-full px-3 py-2 text-sm font-medium bg-white text-[#1f3149] border border-[#d5e2ef] hover:bg-[#f5fbff]">ConnectX</a>
+              <a href="clubs.html" className="hidden md:inline-flex items-center rounded-full px-3 py-2 text-sm font-medium bg-white text-[#1f3149] border border-[#d5e2ef] hover:bg-[#f5fbff]">Clubs</a>
+            </div>
             <div className="relative flex items-center gap-2" ref={profileMenuRef}>
               <button
                 type="button"
@@ -522,6 +526,7 @@ function DashboardPage() {
                           ? "Event Wrapped Up"
                           : "Register"}
                   </button>
+                  <a href={`event-discussion.html?id=${encodeURIComponent(event.id)}`} className="mt-3 block text-center rounded-full py-2.5 text-sm font-semibold text-[#0e8f84] hover:underline">Discuss</a>
                 </div>
               </div>
             ))}
@@ -576,6 +581,7 @@ function DashboardPage() {
                           ? "Event Wrapped Up"
                           : "Register"}
                   </button>
+                <a href={`event-discussion.html?id=${encodeURIComponent(event.id)}`} className="mt-3 inline-block text-sm font-semibold text-[#0e8f84] hover:underline">Discuss</a>
                 </div>
               </div>
             ))}

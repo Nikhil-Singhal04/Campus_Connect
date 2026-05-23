@@ -184,6 +184,7 @@ function AdminPortalPage({ token, onLogout }) {
   const [approvedEvents, setApprovedEvents] = useState([]);
   const [pendingEvents, setPendingEvents] = useState([]);
   const [pendingDeletionRequests, setPendingDeletionRequests] = useState([]);
+  const [contactMessages, setContactMessages] = useState([]);
   const [recentRegistrations, setRecentRegistrations] = useState([]);
   const [search, setSearch] = useState("");
   const [accountFilter, setAccountFilter] = useState("All");
@@ -200,19 +201,25 @@ function AdminPortalPage({ token, onLogout }) {
   const [eventRegistrationsCount, setEventRegistrationsCount] = useState(0);
   const [isLoadingRegistrations, setIsLoadingRegistrations] = useState(false);
   const [registrationsError, setRegistrationsError] = useState("");
+  const [selectedContactMessage, setSelectedContactMessage] = useState(null);
+  const [contactReplySubject, setContactReplySubject] = useState("");
+  const [contactReplyMessage, setContactReplyMessage] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
+  const [contactMessagesError, setContactMessagesError] = useState("");
 
   async function fetchAdminData() {
     try {
       setIsBusy(true);
       setError("");
-      const [healthData, usersData, eventsData, approvedEventsData, pendingData, deletionData, registrationsData] = await Promise.all([
+      const [healthData, usersData, eventsData, approvedEventsData, pendingData, deletionData, registrationsData, contactMessagesData] = await Promise.all([
         campusAPI.health(),
         campusAPI.getAdminUsers(),
         campusAPI.listEvents(),
         campusAPI.getAdminEvents("Approved"),
         campusAPI.getAdminEvents("Pending"),
         campusAPI.getDeletionRequests(),
-        campusAPI.getAdminRegistrations(120)
+        campusAPI.getAdminRegistrations(120),
+        campusAPI.getAdminContactMessages()
       ]);
 
       setHealth(healthData || { ok: false, service: "Unknown" });
@@ -225,6 +232,17 @@ function AdminPortalPage({ token, onLogout }) {
       const normalizedRegistrations = Array.isArray(registrationsData.registrations) ? registrationsData.registrations : [];
       setRecentRegistrations(normalizedRegistrations);
       setRegistrationCount(Number(registrationsData.count || normalizedRegistrations.length || 0));
+
+      const normalizedMessages = Array.isArray(contactMessagesData.messages) ? contactMessagesData.messages : [];
+      setContactMessages(normalizedMessages);
+      setContactMessagesError("");
+
+      if (!selectedContactMessage && normalizedMessages.length > 0) {
+        const firstMessage = normalizedMessages[0];
+        setSelectedContactMessage(firstMessage);
+        setContactReplySubject(firstMessage.subject || "");
+        setContactReplyMessage("");
+      }
 
       if (!usersData || !Array.isArray(usersData.users)) {
         setUsers([]);
@@ -253,6 +271,58 @@ function AdminPortalPage({ token, onLogout }) {
     const pendingItems = pendingEvents.map((event) => ({ ...event, eventStatus: "Pending" }));
     return [...pendingItems, ...approvedItems].sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0));
   }, [approvedEvents, pendingEvents]);
+
+  async function loadContactMessages() {
+    try {
+      setContactMessagesError("");
+      const data = await campusAPI.getAdminContactMessages();
+      const normalizedMessages = Array.isArray(data.messages) ? data.messages : [];
+      setContactMessages(normalizedMessages);
+
+      if (normalizedMessages.length === 0) {
+        setSelectedContactMessage(null);
+        setContactReplySubject("");
+        setContactReplyMessage("");
+        return;
+      }
+
+      if (!normalizedMessages.find((message) => message.id === selectedContactMessage?.id)) {
+        const firstMessage = normalizedMessages[0];
+        setSelectedContactMessage(firstMessage);
+        setContactReplySubject(firstMessage.subject || "");
+        setContactReplyMessage("");
+      }
+    } catch (error) {
+      setContactMessagesError(error.message || "Could not load contact messages.");
+    }
+  }
+
+  async function sendContactReply(event) {
+    event.preventDefault();
+
+    if (!selectedContactMessage) return;
+
+    const subject = String(contactReplySubject || "").trim();
+    const message = String(contactReplyMessage || "").trim();
+
+    if (!subject || !message) {
+      setContactMessagesError("Reply subject and message are required.");
+      return;
+    }
+
+    try {
+      setIsSendingReply(true);
+      setContactMessagesError("");
+      await campusAPI.replyToContactMessage(selectedContactMessage.id, { subject, message });
+      setContactReplyMessage("");
+      await loadContactMessages();
+      await fetchAdminData();
+    } catch (error) {
+      setContactMessagesError(error.message || "Could not send reply.");
+    } finally {
+      setIsSendingReply(false);
+    }
+  }
 
   const filteredAllEventItems = useMemo(() => {
     if (eventViewFilter === "Pending") {
@@ -367,6 +437,7 @@ function AdminPortalPage({ token, onLogout }) {
 
   const navItems = [
     { id: "dashboard", label: "Dashboard" },
+    { id: "messages", label: "Messages" },
     { id: "events", label: "All Events" },
     { id: "pending", label: "Pending Approvals" },
     { id: "delete", label: "Delete Requests" },
@@ -409,7 +480,7 @@ function AdminPortalPage({ token, onLogout }) {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0f8c80]">Administrator</p>
                 <h1 className="font-display text-3xl font-bold text-[#132b3f] md:text-4xl">Admin Portal</h1>
-                <p className="mt-1 text-sm text-[#52677f]">Inspect registered users, monitor service health, and export user records.</p>
+                <p className="mt-1 text-sm text-[#52677f]">Inspect users, manage contact messages, monitor service health, and export records.</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <a href="index.html" className="rounded-xl border border-[#c9d8e7] bg-white px-4 py-2 text-sm font-semibold text-[#1f3149] transition hover:border-[#0ea59699] hover:text-[#0e8f84]">Home</a>
@@ -521,6 +592,118 @@ function AdminPortalPage({ token, onLogout }) {
                   </div>
                 </section>
               </>
+            )}
+
+            {activePanel === "messages" && (
+              <section className="mt-6 grid gap-4 lg:grid-cols-[360px_1fr]">
+                <div className="overflow-hidden rounded-2xl border border-[#d6e4ef] bg-white">
+                  <div className="border-b border-[#e0ebf4] bg-[#f7fbff] px-4 py-3">
+                    <h2 className="font-display text-lg font-semibold text-[#132b3f]">Contact Messages ({contactMessages.length})</h2>
+                    <p className="mt-1 text-xs text-[#52677f]">Messages are stored after sending and replies are sent from the official campus address.</p>
+                  </div>
+
+                  <div className="max-h-[560px] overflow-auto p-3">
+                    {contactMessages.length === 0 ? (
+                      <p className="rounded-xl border border-dashed border-[#d5e2ef] bg-[#f8fbff] px-4 py-6 text-sm text-[#5f748a]">
+                        No contact messages available yet.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {contactMessages.map((message) => (
+                          <button
+                            key={message.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedContactMessage(message);
+                              setContactReplySubject(message.subject || "");
+                              setContactReplyMessage("");
+                            }}
+                            className={`w-full rounded-xl border p-3 text-left transition ${selectedContactMessage?.id === message.id ? "border-[#0ea596] bg-[#ecfbf7]" : "border-[#dce8f3] bg-[#f9fcff] hover:border-[#b9d8ec]"}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <p className="font-semibold text-[#1a2a3d]">{message.subject}</p>
+                                <p className="mt-1 text-xs text-[#5f748a]">From {message.name} &lt;{message.email}&gt;</p>
+                              </div>
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${message.repliedAt ? "bg-[#e8f8f4] text-[#0a7e68]" : "bg-[#fff4e8] text-[#91551f]"}`}>
+                                {message.repliedAt ? "Replied" : "New"}
+                              </span>
+                            </div>
+                            <p className="mt-2 line-clamp-2 text-sm text-[#4f6780]">{message.message}</p>
+                            <p className="mt-2 text-xs text-[#7a8ea4]">{formatDate(message.createdAt)}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-[#d6e4ef] bg-white">
+                  <div className="border-b border-[#e0ebf4] bg-[#f7fbff] px-4 py-3">
+                    <h2 className="font-display text-lg font-semibold text-[#132b3f]">Reply</h2>
+                    <p className="mt-1 text-xs text-[#52677f]">Replies send from the official campus email configured in the backend.</p>
+                  </div>
+
+                  <div className="p-4">
+                    {!selectedContactMessage ? (
+                      <p className="rounded-xl border border-dashed border-[#d5e2ef] bg-[#f8fbff] px-4 py-6 text-sm text-[#5f748a]">
+                        Select a message to reply.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="rounded-xl border border-[#dce8f3] bg-[#f9fcff] p-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#315a8d]">Original message</p>
+                          <p className="mt-2 text-sm font-semibold text-[#1a2a3d]">{selectedContactMessage.subject}</p>
+                          <p className="mt-1 text-xs text-[#5f748a]">From {selectedContactMessage.name} &lt;{selectedContactMessage.email}&gt; on {formatDate(selectedContactMessage.createdAt)}</p>
+                          <p className="mt-3 whitespace-pre-wrap text-sm text-[#4f6780]">{selectedContactMessage.message}</p>
+                        </div>
+
+                        {selectedContactMessage.repliedAt && (
+                          <div className="mt-3 rounded-xl border border-[#e8f8f4] bg-[#f3fffb] p-4 text-sm text-[#186f61]">
+                            Already replied on {formatDate(selectedContactMessage.repliedAt)}.
+                          </div>
+                        )}
+
+                        {contactMessagesError && (
+                          <div className="mt-3 rounded-xl border border-[#f8d7dd] bg-[#fdeef1] p-3 text-sm font-medium text-[#c53c58]">
+                            {contactMessagesError}
+                          </div>
+                        )}
+
+                        <form onSubmit={sendContactReply} className="mt-4 space-y-4">
+                          <label className="block text-sm text-[#2a4057]">
+                            Reply subject
+                            <input
+                              className="mt-2 w-full rounded-xl border border-[#d2dfeb] bg-white px-3 py-2.5 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                              type="text"
+                              value={contactReplySubject}
+                              onChange={(e) => setContactReplySubject(e.target.value)}
+                            />
+                          </label>
+
+                          <label className="block text-sm text-[#2a4057]">
+                            Reply message
+                            <textarea
+                              className="mt-2 min-h-[180px] w-full rounded-xl border border-[#d2dfeb] bg-white px-3 py-2.5 text-[#1a2a3d] outline-none transition focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59630]"
+                              value={contactReplyMessage}
+                              onChange={(e) => setContactReplyMessage(e.target.value)}
+                              placeholder="Write the reply the sender will receive from the official campus email address"
+                            />
+                          </label>
+
+                          <button
+                            type="submit"
+                            disabled={isSendingReply}
+                            className="rounded-xl bg-[linear-gradient(135deg,#169f91,#36cfc0)] px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_16px_rgba(22,159,145,0.2)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+                          >
+                            {isSendingReply ? "Sending reply..." : "Send official reply"}
+                          </button>
+                        </form>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </section>
             )}
 
             {activePanel === "events" && (

@@ -1,6 +1,6 @@
 # 🎓 Campus Connect
 
-Campus Connect is a full-stack web application designed to enhance communication and collaboration among students within a college campus. The platform provides features like student networking, post sharing, real-time interaction, announcements, and resource sharing in one centralized system.
+Campus Connect is a full-stack web application designed to enhance communication and collaboration among students within a college campus. The platform provides features like student networking, ConnectX (campus-wide feed), event discussions, clubs, announcements, and resource sharing in one centralized system.
 
 ---
 
@@ -10,7 +10,8 @@ Campus Connect is a full-stack web application designed to enhance communication
 - 👤 Student Profile Management
 - 📝 Create, Edit & Delete Posts
 - ❤️ Like & Comment on Posts
-- 💬 Real-Time Communication
+- 💬 ConnectX Feed and Event Discussions
+- 🧑‍🤝‍🧑 Clubs & Interest Groups
 - 🔎 Search Students & Profiles
 - 📢 Campus Announcements
 - 📂 Resource/File Sharing
@@ -32,7 +33,7 @@ Campus Connect is a full-stack web application designed to enhance communication
 - Express.js
 
 ## Database
-- MongoDB
+- PostgreSQL
 
 ## Other Tools
 - JWT Authentication
@@ -111,12 +112,19 @@ npm start
 
 # 🌍 Environment Variables
 
-Create a `.env` file inside the `server` directory and add the following:
+Create a `.env` file in the project root and add the following:
 
 ```env
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
+PORT=4000
+DB_HOST=localhost
+DB_PORT=5433
+DB_NAME=campus_connect
+DB_USER=postgres
+DB_PASSWORD=your_secure_password
 JWT_SECRET=your_secret_key
+OTP_PEPPER=your_otp_pepper
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=admin_password
 ```
 
 ---
@@ -146,7 +154,6 @@ Add screenshots of your project here.
 - 📱 Mobile Application
 - 🤖 AI-Based Recommendations
 - 🎥 Video Calling Integration
-- 📅 Event Management System
 - 🧠 Smart Notifications
 - ☁️ Cloud Deployment
 
