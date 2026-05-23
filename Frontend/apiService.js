@@ -352,6 +352,27 @@ class CampusConnectAPI {
   }
 
   /**
+   * Get contact messages (admin)
+   */
+  async getAdminContactMessages() {
+    const response = await this.request("/admin/contact-messages");
+    return {
+      messages: response.messages,
+      count: response.count
+    };
+  }
+
+  /**
+   * Reply to a contact message (admin)
+   */
+  async replyToContactMessage(messageId, payload) {
+    return this.request(`/admin/contact-messages/${messageId}/reply`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+  }
+
+  /**
    * Get registrations for a specific event (admin)
    */
   async getAdminEventRegistrations(eventId) {
@@ -431,6 +452,48 @@ class CampusConnectAPI {
    */
   async health() {
     return this.request("/health");
+  }
+
+  // ============ ConnectX Endpoints ============
+  async getConnectXPosts() {
+    try { const response = await this.request('/connectx/posts'); return response.posts || []; } catch (e) { throw e; }
+  }
+
+  async createConnectXPost(payload) {
+    return this.request('/connectx/posts', { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  async likeConnectXPost(postId) {
+    return this.request(`/connectx/posts/${postId}/like`, { method: 'POST' });
+  }
+
+  async commentConnectXPost(postId, payload) {
+    return this.request(`/connectx/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  // ============ Event Threads Endpoints ============
+  async getEventThread(eventId) {
+    const response = await this.request(`/event-threads/${eventId}`);
+    return response.items || [];
+  }
+
+  async postEventThread(eventId, payload) {
+    return this.request(`/event-threads/${eventId}`, { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  // ============ Clubs Endpoints ============
+  async getClubs() {
+    const response = await this.request('/clubs');
+    return response.clubs || [];
+  }
+
+  async getJoinedClubs() {
+    const response = await this.request('/clubs/joined');
+    return response.clubs || [];
+  }
+
+  async joinClub(clubId, payload) {
+    return this.request(`/clubs/${clubId}/join`, { method: 'POST', body: JSON.stringify(payload) });
   }
 }
 

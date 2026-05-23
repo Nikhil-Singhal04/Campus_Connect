@@ -6,6 +6,15 @@ function getThemeState() {
 
 function App() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: ""
+  });
+  const [contactStatus, setContactStatus] = useState({ type: "idle", text: "" });
+  const [contactBusy, setContactBusy] = useState(false);
   const { isDark } = getThemeState();
 
   useEffect(() => {
@@ -52,6 +61,63 @@ function App() {
   const textPrimary = isDark ? "text-[#eef4fb]" : "text-[#1a2a3d]";
   const textSecondary = isDark ? "text-[#aebfd3]" : "text-[#50647d]";
   const textSoft = isDark ? "text-[#8da2bb]" : "text-[#5b7088]";
+  const dividerClass = isDark ? "border-white/10" : "border-[#d6e3ef]";
+
+  function handleContactChange(event) {
+    const { name, value } = event.target;
+    setContactForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  async function submitContact(event) {
+    event.preventDefault();
+    if (contactBusy) return;
+
+    const payload = {
+      name: contactForm.name.trim(),
+      email: contactForm.email.trim(),
+      subject: contactForm.subject.trim(),
+      message: contactForm.message.trim()
+    };
+
+    if (!payload.name || !payload.email || !payload.subject || !payload.message) {
+      setContactStatus({ type: "error", text: "Please fill in all fields." });
+      return;
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(payload.email)) {
+      setContactStatus({ type: "error", text: "Please enter a valid email address." });
+      return;
+    }
+
+    if (payload.message.length > 2000) {
+      setContactStatus({ type: "error", text: "Message is too long. Please shorten it." });
+      return;
+    }
+
+    setContactBusy(true);
+    setContactStatus({ type: "idle", text: "" });
+
+    try {
+      const apiHost = window.location.hostname || "127.0.0.1";
+      const apiBase = `http://${apiHost}:4000/api`;
+      const response = await fetch(`${apiBase}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const responseData = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(responseData.message || "Could not send message.");
+      }
+
+      setContactStatus({ type: "success", text: "Message sent. Our team inbox will receive it shortly." });
+    } catch (error) {
+      setContactStatus({ type: "error", text: error.message || "Could not send message." });
+    } finally {
+      setContactBusy(false);
+    }
+  }
 
   return (
     <div className={shellClasses}>
@@ -142,13 +208,6 @@ function App() {
         </section>
 
         <section id="events" className="mt-14 text-center">
-          <div className="mb-7">
-            <h2 className={`font-display text-3xl font-bold md:text-4xl ${textPrimary}`}>
-              Why
-              <span className="ml-2 bg-[linear-gradient(120deg,#0ea596,#2563eb)] bg-clip-text text-transparent">Campus Connect</span>
-            </h2>
-            <p className={`mt-2 ${textSoft}`}>Everything needed to run and join events in one place.</p>
-          </div>
 
           <div className="grid gap-5 md:grid-cols-3">
             {highlights.map((item, index) => (
@@ -184,46 +243,202 @@ function App() {
           </div>
         </section>
 
-        <section id="contact" className={`mt-14 p-7 text-center md:p-10 ${panelClasses}`}>
-          <h2 className={`font-display text-3xl font-bold ${textPrimary}`}>Contact</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            <div className={`rounded-xl border p-4 text-center ${isDark ? "border-white/10 bg-white/5" : "border-[#d4e0eb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)]"}`}>
-              <p className="text-sm uppercase tracking-[0.12em] text-[#129c8f]">Email</p>
-              <a href="mailto:support@campusconnect.com" className={`mt-2 block ${isDark ? "text-[#d9e6f4] hover:text-white" : "text-[#2b435c] hover:text-[#0e8f84]"}`}>support@campusconnect.com</a>
+        <section id="contact" className={`mt-14 p-7 md:p-10 ${panelClasses}`}>
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-[0.26em] ${textSoft}`}>Contact</p>
+              <h2 className={`mt-3 font-display text-3xl font-bold ${textPrimary}`}>Talk to our team</h2>
+              <p className={`mt-3 max-w-[46ch] leading-7 ${textSoft}`}>
+                Questions about events, onboarding, or partnerships? We reply within one business day.
+              </p>
+
+              <div className="mt-5">
+                  <button
+                    type="button"
+                    onClick={() => setShowContactForm(true)}
+                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${isDark ? "border-white/10 bg-white/5 text-[#eef4fb] hover:border-[#73d6cb]/40 hover:text-white" : "border-[#c8d5e3] bg-[#ffffff] text-[#1f3147] hover:border-[#0ea59680] hover:text-[#0e8f84]"}`}
+                  >
+                    Contact us
+                  </button>
+              </div>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className={`rounded-2xl border p-4 ${isDark ? "border-white/10 bg-white/5" : "border-[#d4e0eb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)]"}`}>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#129c8f]">Email</p>
+                  <a href="mailto:nikkhil2019singhal@gmail.com" className={`mt-2 block text-sm font-semibold ${isDark ? "text-[#d9e6f4] hover:text-white" : "text-[#2b435c] hover:text-[#0e8f84]"}`}>
+                    nikkhil2019singhal@gmail.com
+                  </a>
+                </div>
+                <div className={`rounded-2xl border p-4 ${isDark ? "border-white/10 bg-white/5" : "border-[#d4e0eb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)]"}`}>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#129c8f]">Phone</p>
+                  <a href="tel:+919518049986" className={`mt-2 block text-sm font-semibold ${isDark ? "text-[#d9e6f4] hover:text-white" : "text-[#2b435c] hover:text-[#0e8f84]"}`}>
+                    +91 12345 67890
+                  </a>
+                </div>
+                <div className={`rounded-2xl border p-4 sm:col-span-2 ${isDark ? "border-white/10 bg-white/5" : "border-[#d4e0eb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)]"}`}>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#129c8f]">Hours</p>
+                  <p className={`mt-2 text-sm font-semibold ${isDark ? "text-[#d9e6f4]" : "text-[#2b435c]"}`}>
+                    Mon - Fri, 9:00 AM - 6:00 PM
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className={`rounded-xl border p-4 text-center ${isDark ? "border-white/10 bg-white/5" : "border-[#d4e0eb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)]"}`}>
-              <p className="text-sm uppercase tracking-[0.12em] text-[#129c8f]">Phone</p>
-              <a href="tel:+911234567890" className={`mt-2 block ${isDark ? "text-[#d9e6f4] hover:text-white" : "text-[#2b435c] hover:text-[#0e8f84]"}`}>+91 12345 67890</a>
-            </div>
-            <div className={`rounded-xl border p-4 text-center ${isDark ? "border-white/10 bg-white/5" : "border-[#d4e0eb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)]"}`}>
-              <p className="text-sm uppercase tracking-[0.12em] text-[#129c8f]">Hours</p>
-              <p className={`mt-2 ${isDark ? "text-[#d9e6f4]" : "text-[#2b435c]"}`}>Mon - Fri, 9:00 AM - 6:00 PM</p>
+
+            <div>
+              {showContactForm ? (
+                <form
+                  onSubmit={submitContact}
+                  className={`rounded-2xl border p-6 ${isDark ? "border-white/10 bg-white/5" : "border-[#d4e0eb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)]"}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className={`text-lg font-semibold ${textPrimary}`}>Send a message</h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowContactForm(false)}
+                      className={`text-sm font-semibold transition ${isDark ? "text-[#aebfd3] hover:text-white" : "text-[#5b7088] hover:text-[#0e8f84]"}`}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="mt-4 grid gap-4">
+                    <label className={`text-sm font-semibold ${textPrimary}`}>
+                      Full name
+                      <input
+                        className={`mt-2 w-full rounded-xl border px-3 py-3 text-sm outline-none transition ${isDark ? "border-white/10 bg-[#0b1422] text-[#eef4fb] focus:border-[#6bd7cb] focus:ring-2 focus:ring-[#6bd7cb33]" : "border-[#d2dfeb] bg-[#ffffff] text-[#1a2a3d] focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59633]"}`}
+                        type="text"
+                        name="name"
+                        value={contactForm.name}
+                        onChange={handleContactChange}
+                        placeholder="Your name"
+                      />
+                    </label>
+                    <label className={`text-sm font-semibold ${textPrimary}`}>
+                      Email address
+                      <input
+                        className={`mt-2 w-full rounded-xl border px-3 py-3 text-sm outline-none transition ${isDark ? "border-white/10 bg-[#0b1422] text-[#eef4fb] focus:border-[#6bd7cb] focus:ring-2 focus:ring-[#6bd7cb33]" : "border-[#d2dfeb] bg-[#ffffff] text-[#1a2a3d] focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59633]"}`}
+                        type="email"
+                        name="email"
+                        value={contactForm.email}
+                        onChange={handleContactChange}
+                        placeholder="you@domain.com"
+                      />
+                    </label>
+                    <label className={`text-sm font-semibold ${textPrimary}`}>
+                      Subject
+                      <input
+                        className={`mt-2 w-full rounded-xl border px-3 py-3 text-sm outline-none transition ${isDark ? "border-white/10 bg-[#0b1422] text-[#eef4fb] focus:border-[#6bd7cb] focus:ring-2 focus:ring-[#6bd7cb33]" : "border-[#d2dfeb] bg-[#ffffff] text-[#1a2a3d] focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59633]"}`}
+                        type="text"
+                        name="subject"
+                        value={contactForm.subject}
+                        onChange={handleContactChange}
+                        placeholder="How can we help?"
+                      />
+                    </label>
+                    <label className={`text-sm font-semibold ${textPrimary}`}>
+                      Message
+                      <textarea
+                        className={`mt-2 min-h-[140px] w-full resize-none rounded-xl border px-3 py-3 text-sm outline-none transition ${isDark ? "border-white/10 bg-[#0b1422] text-[#eef4fb] focus:border-[#6bd7cb] focus:ring-2 focus:ring-[#6bd7cb33]" : "border-[#d2dfeb] bg-[#ffffff] text-[#1a2a3d] focus:border-[#0ea596] focus:ring-2 focus:ring-[#0ea59633]"}`}
+                        name="message"
+                        value={contactForm.message}
+                        onChange={handleContactChange}
+                        placeholder="Write your question..."
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <button
+                      type="submit"
+                      disabled={contactBusy}
+                      className="rounded-xl bg-[linear-gradient(135deg,#169f91,#36cfc0)] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(22,159,145,0.25)] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {contactBusy ? "Sending..." : "Send message"}
+                    </button>
+                    {contactStatus.text ? (
+                      <p className={`text-sm ${contactStatus.type === "success" ? "text-[#0e8f84]" : "text-[#d33a2c]"}`}>
+                        {contactStatus.text}
+                      </p>
+                    ) : null}
+                  </div>
+                </form>
+              ) : (
+                <div className={`h-full rounded-2xl border p-6 ${isDark ? "border-white/10 bg-white/5" : "border-[#d4e0eb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)]"}`}>
+                  <p className={`text-xs font-semibold uppercase tracking-[0.26em] ${textSoft}`}>Support desk</p>
+                  <h3 className={`mt-3 text-xl font-semibold ${textPrimary}`}>We are ready to help</h3>
+                  <p className={`mt-3 leading-7 ${textSoft}`}>
+                    Share your query and our team will respond within one business day.
+                  </p>
+                  <ul className={`mt-4 space-y-2 text-sm ${textSoft}`}>
+                    <li className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-[#0ea596]" />
+                      Event onboarding and registrations
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-[#0ea596]" />
+                      Partnership and support requests
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-[#0ea596]" />
+                      Account or access questions
+                    </li>
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => setShowContactForm(true)}
+                    className="mt-6 inline-flex items-center justify-center rounded-xl bg-[linear-gradient(135deg,#169f91,#36cfc0)] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(22,159,145,0.25)] transition hover:-translate-y-0.5 hover:brightness-105"
+                  >
+                    Get support
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </section>
       </main>
 
       <footer className={`relative z-10 mx-auto mt-16 w-[calc(100%-1rem)] max-w-[1200px] px-6 pb-8 pt-10 text-sm shadow-[0_14px_36px_rgba(31,49,71,0.08)] md:w-[calc(100%-2rem)] md:px-10 ${panelClasses}`}>
-        <div className="grid gap-10 text-center md:grid-cols-2 md:text-left">
+        <div className="grid gap-10 md:grid-cols-[2.2fr_1.4fr]">
           <div>
-            <h3 className={`font-display text-2xl font-semibold ${textPrimary}`}>Campus Connect</h3>
-            <p className={`mx-auto mt-4 max-w-[36ch] leading-7 md:mx-0 ${textSoft}`}>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0ea596,#36cfc0)] text-sm font-semibold text-white shadow-[0_12px_24px_rgba(22,159,145,0.28)]">
+                CC
+              </span>
+              <div>
+                <h3 className={`font-display text-2xl font-semibold ${textPrimary}`}>Campus Connect</h3>
+                <p className={`text-[11px] uppercase tracking-[0.26em] ${textSoft}`}>Student-first platform</p>
+              </div>
+            </div>
+            <p className={`mt-4 max-w-[48ch] leading-7 ${textSoft}`}>
               Building a connected campus where students discover events, join communities, and grow together.
             </p>
           </div>
 
-          <div className="md:justify-self-end md:text-right">
-            <h4 className={`font-display text-xl font-semibold ${textPrimary}`}>Get in Touch</h4>
-            <ul className={`mt-4 space-y-2.5 text-base ${isDark ? "text-[#d9e6f4]" : ""}`}>
-              <li><a href="mailto:support@campusconnect.com" className="transition hover:text-[#0e8f84]">support@campusconnect.com</a></li>
-              <li><a href="tel:+911234567890" className="transition hover:text-[#0e8f84]">+91 12345 67890</a></li>
-              <li>Mon - Fri | 9:00 AM - 6:00 PM</li>
-            </ul>
+          <div className={`grid gap-8 md:grid-cols-2 md:border-l md:pl-8 ${dividerClass}`}>
+            <div>
+              <p className={`text-[11px] font-semibold uppercase tracking-[0.26em] ${textSoft}`}>Explore</p>
+              <nav className={`mt-4 flex flex-col gap-2 text-sm font-semibold ${isDark ? "text-[#d9e6f4]" : "text-[#314860]"}`}>
+                <a href="index.html" className="transition hover:text-[#0e8f84]">Home</a>
+                <a href="#events" className="transition hover:text-[#0e8f84]">Events</a>
+                <a href="#about" className="transition hover:text-[#0e8f84]">About</a>
+                <a href="#contact" className="transition hover:text-[#0e8f84]">Contact</a>
+              </nav>
+            </div>
+
+            <div>
+              <p className={`text-[11px] font-semibold uppercase tracking-[0.26em] ${textSoft}`}>Quick Links</p>
+              <nav className={`mt-4 flex flex-col gap-2 text-sm font-semibold ${isDark ? "text-[#d9e6f4]" : "text-[#314860]"}`}>
+                <a href="signin.html" className="transition hover:text-[#0e8f84]">Sign In</a>
+                <a href="signup.html" className="transition hover:text-[#0e8f84]">Get Started</a>
+                <a href="#contact" className="transition hover:text-[#0e8f84]">Support</a>
+              </nav>
+            </div>
           </div>
         </div>
 
-        <div className={`mt-8 border-t pt-5 text-center ${isDark ? "border-white/10 text-[#8da2bb]" : "border-[#d3deea] text-[#6a8097]"}`}>
+        <div className={`mt-8 flex flex-col items-center justify-between gap-3 border-t pt-5 text-center md:flex-row ${dividerClass} ${isDark ? "text-[#8da2bb]" : "text-[#6a8097]"}`}>
           <p>&copy; {new Date().getFullYear()} Campus Connect. All rights reserved.</p>
+          <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${dividerClass} ${isDark ? "text-[#aebfd3]" : "text-[#566b84]"}`}>
+            Trusted by 40+ campuses
+          </span>
         </div>
       </footer>
       <ChatbotWidget />

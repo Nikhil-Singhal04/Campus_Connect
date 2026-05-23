@@ -3,7 +3,7 @@ const { useState } = React;
 function getThemeState() {
   return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
 }
-const REQUIRE_EMAIL_OTP = false;
+const REQUIRE_EMAIL_OTP = true;
 
 function SignupPage() {
   const { isDark } = getThemeState();
@@ -284,7 +284,7 @@ function SignupPage() {
       setIsBusy(true);
       setMessage({ text: "", type: "idle" });
 
-      await campusAPI.register({
+      const response = await campusAPI.register({
         signupProofToken: REQUIRE_EMAIL_OTP ? signupProofToken : null,
         accountType: formData.accountType,
         firstName: formData.firstName.trim(),
@@ -298,28 +298,25 @@ function SignupPage() {
         password: formData.password
       });
 
-      setSuccess("Signup completed successfully. Your account has been created.");
-      setStep(1);
-      setIsEmailVerified(false);
-      setIsCodeSent(false);
-      setSignupProofToken("");
-      setOtpDigits(["", "", "", "", "", ""]);
-      setFormData({
-        accountType: "",
-        firstName: "",
-        lastName: "",
-        regNo: "",
-        programOrUnit: "",
-        yearOrDesignation: "",
-        email: "",
-        department: "",
-        password: "",
-        confirmPassword: "",
-        username: "",
-        consent: false
-      });
+      if (response?.user) {
+        localStorage.setItem("cc_user", JSON.stringify(response.user));
+      }
+
+      setSuccess("Signup completed successfully. Redirecting to your dashboard...");
+      setTimeout(() => {
+        const normalizedType = String(response?.user?.accountType || formData.accountType || "")
+          .toLowerCase();
+        if (normalizedType === "organizer") {
+          window.location.href = "organiser.html";
+          return;
+        }
+        window.location.href = "dashboard.html";
+      }, 800);
     } catch (_error) {
-      setError("Network error while creating account.");
+      const errorText = typeof Utils !== "undefined" && Utils?.formatError
+        ? Utils.formatError(_error)
+        : "Network error while creating account.";
+      setError(errorText);
     } finally {
       setIsBusy(false);
     }

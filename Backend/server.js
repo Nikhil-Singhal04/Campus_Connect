@@ -13,9 +13,13 @@ dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 dotenv.config();
 
 const { Resend } = require("resend");
+const sgMail = require("@sendgrid/mail");
 const { pool, run, get, all, close } = require("./db");
 const { initializeDatabase } = require("./init-db");
 const chatRouter = require("./routes/chat");
+const communityRouter = require("./routes/community");
+const eventThreadsRouter = require("./routes/eventThreads");
+const clubsRouter = require("./routes/clubs");
 const { sendRegistrationNotifications } = require("./services/notificationService");
 
 const {
@@ -31,7 +35,11 @@ const {
   ADMIN_PASSWORD = "",
   RESEND_API_KEY,
   RESEND_FROM_EMAIL,
-  RESEND_AUDIENCE_NAME = "Campus Connect"
+  RESEND_AUDIENCE_NAME = "Campus Connect",
+  SENDGRID_API_KEY,
+  CONTACT_TO_EMAIL,
+  CONTACT_FROM_EMAIL,
+  CONTACT_SUBJECT_PREFIX = "Campus Connect"
 } = process.env;
 
 const emailOtpEnabled = String(REQUIRE_EMAIL_OTP).toLowerCase() === "true";
@@ -52,6 +60,11 @@ if (emailOtpEnabled && (!RESEND_API_KEY || !RESEND_FROM_EMAIL)) {
 }
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+const sendgridReady = Boolean(SENDGRID_API_KEY && CONTACT_TO_EMAIL && CONTACT_FROM_EMAIL);
+if (SENDGRID_API_KEY) {
+  sgMail.setApiKey(SENDGRID_API_KEY);
+}
+const contactSubjectPrefix = String(CONTACT_SUBJECT_PREFIX || "Campus Connect").trim();
 const app = express();
 const allowedOrigins = String(FRONTEND_ORIGIN)
   .split(",")
@@ -140,8 +153,19 @@ const adminLimiter = rateLimit({
   message: { message: "Too many admin requests. Please slow down." }
 });
 
+const contactLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 12,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many contact requests. Please try again later." }
+});
+
 app.use(globalLimiter);
 app.use("/api/chat", chatRouter);
+app.use('/api/connectx', communityRouter);
+app.use('/api/event-threads', eventThreadsRouter);
+app.use('/api/clubs', clubsRouter);
 
 function hashOtp(code) {
   return crypto.createHash("sha256").update(`${code}:${OTP_PEPPER}`).digest("hex");
@@ -298,6 +322,135 @@ function getSessionPayload(req) {
 // Database initialization is now in init-db.js
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "campus-connect-auth-api" });
+});
+
+app.post("/api/contact", contactLimiter, async (req, res) => {
+  try {
+    const name = String(req.body.name || "").trim();
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const subject = String(req.body.subject || "").trim();
+    const message = String(req.body.message || "").trim();
+
+    if (!name || !email || !subject || !message) {
+      return jsonError(res, 400, "Name, email, subject, and message are required.");
+    }
+
+    if (!isValidEmail(email)) {
+      return jsonError(res, 400, "Please provide a valid email address.");
+    }
+
+    if (message.length > 2000) {
+      return jsonError(res, 400, "Message is too long. Please shorten it.");
+    }
+
+    if (!sendgridReady) {
+      return jsonError(res, 503, "Contact email is not configured.");
+    }
+
+    const subjectLine = `${contactSubjectPrefix || "Campus Connect"}: ${subject}`;
+    const textBody = [
+      "New contact message:",
+      "",
+      `Name: ${name}`,
+      `Email: ${email}`,
+      `Subject: ${subject}`,
+      "",
+      message
+    ].join("\n");
+
+    await sgMail.send({
+      to: CONTACT_TO_EMAIL,
+      from: CONTACT_FROM_EMAIL,
+      replyTo: email,
+      subject: subjectLine,
+      text: textBody
+    });
+
+    await run(
+      `INSERT INTO contact_messages (name, email, subject, message, created_at) VALUES (?, ?, ?, ?, ?)`,
+      [name, email, subject, message, Date.now()]
+    );
+
+    return res.json({ message: "Message sent successfully." });
+  } catch (error) {
+    console.error("Contact form error:", error);
+    const sendgridMessage = error?.response?.body?.errors?.[0]?.message;
+    return jsonError(res, 500, sendgridMessage || error.message || "Could not send message right now.");
+  }
+});
+
+app.get("/api/admin/contact-messages", adminLimiter, requireDeveloper, async (_req, res) => {
+  try {
+    const messages = await all(
+      `SELECT id, name, email, subject, message, created_at AS "createdAt", replied_at AS "repliedAt", reply_subject AS "replySubject", reply_message AS "replyMessage"
+       FROM contact_messages
+       ORDER BY created_at DESC
+       LIMIT 100`
+    );
+
+    return res.json({ count: messages.length, messages });
+  } catch (error) {
+    console.error("Admin contact messages error:", error);
+    return jsonError(res, 500, "Could not fetch contact messages right now.");
+  }
+});
+
+app.post("/api/admin/contact-messages/:id/reply", adminLimiter, requireDeveloper, async (req, res) => {
+  try {
+    const messageId = Number(req.params.id);
+    const subject = String(req.body.subject || "").trim();
+    const message = String(req.body.message || "").trim();
+
+    if (!Number.isFinite(messageId) || messageId <= 0) {
+      return jsonError(res, 400, "Invalid message id.");
+    }
+
+    if (!subject || !message) {
+      return jsonError(res, 400, "Subject and message are required.");
+    }
+
+    if (!sendgridReady) {
+      return jsonError(res, 503, "Contact email is not configured.");
+    }
+
+    const original = await get(
+      `SELECT id, name, email, subject, message FROM contact_messages WHERE id = ?`,
+      [messageId]
+    );
+
+    if (!original) {
+      return jsonError(res, 404, "Contact message not found.");
+    }
+
+    const subjectLine = subject.toLowerCase().startsWith("re:") ? subject : `Re: ${subject}`;
+
+    await sgMail.send({
+      to: original.email,
+      from: CONTACT_FROM_EMAIL,
+      replyTo: CONTACT_FROM_EMAIL,
+      subject: subjectLine,
+      text: [
+        `Hello ${original.name},`,
+        "",
+        message,
+        "",
+        "--- Original message ---",
+        `Subject: ${original.subject}`,
+        `Message: ${original.message}`
+      ].join("\n")
+    });
+
+    await run(
+      `UPDATE contact_messages SET replied_at = ?, reply_subject = ?, reply_message = ? WHERE id = ?`,
+      [Date.now(), subjectLine, message, messageId]
+    );
+
+    return res.json({ message: "Reply sent successfully." });
+  } catch (error) {
+    console.error("Admin contact reply error:", error);
+    const sendgridMessage = error?.response?.body?.errors?.[0]?.message;
+    return jsonError(res, 500, sendgridMessage || error.message || "Could not send reply right now.");
+  }
 });
 
 app.get("/api/debug/events", async (_req, res) => {
@@ -1378,11 +1531,12 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
 
     const passwordHash = await bcrypt.hash(String(password), 12);
 
-    await run(
+    const insertResult = await run(
       `INSERT INTO users (
         account_type, first_name, last_name, reg_no, department,
         program_or_unit, year_or_designation, email, username, password_hash, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING id`,
       [
         accountType,
         String(firstName).trim(),
@@ -1398,8 +1552,14 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
       ]
     );
 
+    const userId = insertResult?.lastID;
+    if (!userId) {
+      return jsonError(res, 500, "Could not finalize account creation.");
+    }
+
     const token = jwt.sign(
       {
+        userId,
         email: normalizedEmail,
         username: normalizedUsername,
         scope: "session"
@@ -1408,7 +1568,18 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    return res.status(201).json({ message: "Account created successfully.", token });
+    return res.status(201).json({
+      message: "Account created successfully.",
+      token,
+      user: {
+        id: userId,
+        email: normalizedEmail,
+        username: normalizedUsername,
+        firstName: String(firstName).trim(),
+        lastName: String(lastName).trim(),
+        accountType
+      }
+    });
   } catch (error) {
     if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
       return jsonError(res, 401, "Signup verification expired. Verify email again.");

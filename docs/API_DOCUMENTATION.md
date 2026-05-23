@@ -13,9 +13,10 @@
 3. [Events](#events)
 4. [Event Registrations](#event-registrations)
 5. [Admin](#admin)
-6. [Payments](#payments)
-7. [Error Handling](#error-handling)
-8. [Rate Limiting](#rate-limiting)
+6. [ConnectX](#connectx)
+7. [Payments](#payments)
+8. [Error Handling](#error-handling)
+9. [Rate Limiting](#rate-limiting)
 
 ---
 
@@ -634,6 +635,78 @@
 
 **Errors:**
 - `401` - Unauthorized
+
+---
+
+## ConnectX
+
+### List ConnectX Posts
+
+**Endpoint:** `GET /api/connectx/posts`
+
+**Response (200):**
+```json
+{
+  "posts": [
+    {
+      "id": 1,
+      "author": "John Doe",
+      "text": "Looking for a study group for DSA",
+      "createdAt": 1710000000000,
+      "likes": 3,
+      "comments": []
+    }
+  ]
+}
+```
+
+### Create ConnectX Post
+
+**Endpoint:** `POST /api/connectx/posts`
+
+**Authentication:** Required (Bearer token)
+
+**Request Body:**
+```json
+{
+  "text": "Looking for a study group for DSA"
+}
+```
+
+### Like a ConnectX Post
+
+**Endpoint:** `POST /api/connectx/posts/:id/like`
+
+**Authentication:** Required (Bearer token)
+
+### Comment on a ConnectX Post
+
+**Endpoint:** `POST /api/connectx/posts/:id/comments`
+
+**Authentication:** Required (Bearer token)
+
+**Request Body:**
+```json
+{
+  "text": "I’m in"
+}
+```
+
+### Event Discussion Thread
+
+**Endpoint:** `GET /api/event-threads/:id`
+
+**Endpoint:** `POST /api/event-threads/:id`
+
+**Authentication:** Required for posting
+
+### Clubs
+
+**Endpoint:** `GET /api/clubs`
+
+**Endpoint:** `POST /api/clubs/:id/join`
+
+**Authentication:** Required for join actions
 - `403` - Only students can access
 
 ---
