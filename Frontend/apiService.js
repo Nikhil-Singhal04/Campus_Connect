@@ -3,8 +3,21 @@
  * Centralized API client for all endpoints
  */
 
-const API_HOST = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${API_HOST}:4000/api`;
+function resolveApiBase() {
+  const override = window.__CAMPUS_CONNECT_API_BASE__ || window.CAMPUS_CONNECT_API_BASE;
+  if (override) {
+    return String(override).replace(/\/$/, "");
+  }
+
+  const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+  if (isLocalhost) {
+    return "http://localhost:4000/api";
+  }
+
+  return `${window.location.origin}/api`;
+}
+
+const API_BASE = resolveApiBase();
 
 class CampusConnectAPI {
   constructor() {
@@ -83,12 +96,11 @@ class CampusConnectAPI {
         headers
       });
 
-      // Try to parse JSON; if it fails, capture raw text for debugging.
       const text = await response.text();
       let data;
       try {
         data = text ? JSON.parse(text) : {};
-      } catch (e) {
+      } catch (_error) {
         data = { _raw: text };
       }
 

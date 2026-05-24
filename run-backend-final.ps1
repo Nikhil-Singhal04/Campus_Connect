@@ -6,11 +6,45 @@ Write-Host "Campus Connect - Backend Startup"
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check Docker
-try {
-    docker version >$null 2>&1
-} catch {
+function Test-DockerReady {
+    try {
+        docker version >$null 2>&1
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Start-DockerDesktopIfAvailable {
+    $possiblePaths = @(
+        "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe",
+        "$env:ProgramFiles(x86)\Docker\Docker\Docker Desktop.exe"
+    )
+
+    foreach ($desktopPath in $possiblePaths) {
+        if (Test-Path $desktopPath) {
+            Write-Host "[INFO] Starting Docker Desktop..." -ForegroundColor Cyan
+            Start-Process -FilePath $desktopPath | Out-Null
+            return $true
+        }
+    }
+
+    return $false
+}
+
+if (-not (Test-DockerReady)) {
+    Start-DockerDesktopIfAvailable | Out-Null
+
+    $attempts = 0
+    while (-not (Test-DockerReady) -and $attempts -lt 60) {
+        Start-Sleep -Seconds 2
+        $attempts++
+    }
+}
+
+if (-not (Test-DockerReady)) {
     Write-Host "[ERROR] Docker is not installed or not running" -ForegroundColor Red
+    Write-Host "[INFO] Install Docker Desktop or start it, then run npm start again." -ForegroundColor Yellow
     exit 1
 }
 
