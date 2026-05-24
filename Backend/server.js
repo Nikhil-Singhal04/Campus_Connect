@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -103,7 +103,6 @@ function isPrivateNetworkOrigin(origin) {
 }
 
 app.use(express.json({ limit: "5mb" }));
-app.use(express.static(frontendDir));
 app.use(
   cors({
     origin(origin, callback) {

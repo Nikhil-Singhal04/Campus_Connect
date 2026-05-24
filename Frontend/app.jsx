@@ -395,7 +395,7 @@ function App() {
         </section>
       </main>
 
-      <footer className={`relative z-10 mx-auto mt-16 w-[calc(100%-1rem)] max-w-[1200px] px-6 pb-8 pt-10 text-sm shadow-[0_14px_36px_rgba(31,49,71,0.08)] md:w-[calc(100%-2rem)] md:px-10 ${panelClasses}`}>
+  <footer className={`relative z-10 mx-auto mt-16 w-[calc(100%-1rem)] max-w-[1200px] px-6 pb-8 pt-10 text-sm shadow-[0_14px_36px_rgba(31,49,71,0.08)] md:w-[calc(100%-2rem)] md:px-10 ${panelClasses}`}>
         <div className="grid gap-10 md:grid-cols-[2.2fr_1.4fr]">
           <div>
             <div className="flex items-center gap-3">
