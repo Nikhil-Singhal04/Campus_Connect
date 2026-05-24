@@ -29,7 +29,7 @@ const {
   JWT_SIGNUP_PROOF_EXPIRY = "15m",
   OTP_EXPIRY_MINUTES = "10",
   OTP_PEPPER,
-  REQUIRE_EMAIL_OTP = "false",
+  REQUIRE_EMAIL_OTP = "true",
   DEV_ADMIN_KEY = "",
   ADMIN_EMAIL = "",
   ADMIN_PASSWORD = "",
