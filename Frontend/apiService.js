@@ -83,10 +83,18 @@ class CampusConnectAPI {
         headers
       });
 
-      const data = await response.json();
+      // Try to parse JSON; if it fails, capture raw text for debugging.
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        data = { _raw: text };
+      }
 
       if (!response.ok) {
-        const error = new Error(data.message || "API request failed");
+        const errMsg = (data && data.message) || (data && data._raw) || "API request failed";
+        const error = new Error(errMsg);
         error.status = response.status;
         error.data = data;
         throw error;
