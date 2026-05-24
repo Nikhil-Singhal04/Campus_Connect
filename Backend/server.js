@@ -66,6 +66,7 @@ if (SENDGRID_API_KEY) {
 }
 const contactSubjectPrefix = String(CONTACT_SUBJECT_PREFIX || "Campus Connect").trim();
 const app = express();
+const frontendDir = path.resolve(__dirname, "..", "Frontend");
 const allowedOrigins = String(FRONTEND_ORIGIN)
   .split(",")
   .map((origin) => origin.trim())
@@ -102,6 +103,7 @@ function isPrivateNetworkOrigin(origin) {
 }
 
 app.use(express.json({ limit: "5mb" }));
+app.use(express.static(frontendDir));
 app.use(
   cors({
     origin(origin, callback) {
@@ -166,6 +168,32 @@ app.use("/api/chat", chatRouter);
 app.use('/api/connectx', communityRouter);
 app.use('/api/event-threads', eventThreadsRouter);
 app.use('/api/clubs', clubsRouter);
+
+const frontendHtmlRoutes = [
+  'admin',
+  'clubs',
+  'connectx',
+  'dashboard',
+  'event-discussion',
+  'event-register',
+  'index',
+  'organiser',
+  'payment',
+  'profile',
+  'settings',
+  'signin',
+  'signup'
+];
+
+for (const routeName of frontendHtmlRoutes) {
+  app.get(`/${routeName}`, (_req, res) => {
+    res.sendFile(path.join(frontendDir, `${routeName}.html`));
+  });
+}
+
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(frontendDir, 'index.html'));
+});
 
 function hashOtp(code) {
   return crypto.createHash("sha256").update(`${code}:${OTP_PEPPER}`).digest("hex");

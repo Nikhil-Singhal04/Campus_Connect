@@ -43,7 +43,7 @@ function resolveUserStorageId(user) {
 }
 
 function ConnectXPage() {
-  const [user] = useState(() => {
+  const [user, setUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('cc_user') || 'null');
     } catch {
@@ -130,6 +130,22 @@ function ConnectXPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Ensure we have a user object when a valid token exists
+    async function ensureUserFromServer() {
+      try {
+        const token = window.campusAPI.getToken();
+        if (token && !user) {
+          const me = await campusAPI.getMe();
+          if (mounted && me) {
+            setUser(me);
+            try { localStorage.setItem('cc_user', JSON.stringify(me)); } catch (_) {}
+          }
+        }
+      } catch (err) {
+        console.debug('Could not refresh user from API', err);
+      }
+    }
+
     async function loadClubs() {
       try {
         const serverClubs = await campusAPI.getClubs();
@@ -153,7 +169,9 @@ function ConnectXPage() {
 
     async function loadJoinedClubs() {
       try {
+        console.debug('Fetching joined clubs from server...');
         const serverJoined = await campusAPI.getJoinedClubs();
+        console.debug('Server returned joined clubs:', serverJoined);
         if (mounted && Array.isArray(serverJoined)) {
           const nextJoined = [];
           const seen = new Set();
@@ -163,11 +181,37 @@ function ConnectXPage() {
             seen.add(clubId);
             nextJoined.push(clubId);
           }
+          console.debug('Normalized joined clubs:', nextJoined);
           setJoinedClubs(nextJoined);
           return;
         }
-      } catch (_error) {
-        // fall back to local cache
+      } catch (err) {
+        console.debug('getJoinedClubs failed, will fallback to cache', err && err.message ? err.message : err);
+        // if unauthorized, try refreshing user session and retry once
+        if (String(err?.status || '').startsWith('4') || String(err?.status || '') === '401') {
+          try {
+            const me = await campusAPI.getMe();
+            if (me) {
+              setUser(me);
+              try { localStorage.setItem('cc_user', JSON.stringify(me)); } catch (_) {}
+              const serverJoined = await campusAPI.getJoinedClubs();
+              if (mounted && Array.isArray(serverJoined)) {
+                const nextJoined = [];
+                const seen = new Set();
+                for (const club of serverJoined) {
+                  const clubId = normalizeClubId(club?.id || club?.clubId || club);
+                  if (!clubId || seen.has(clubId)) continue;
+                  seen.add(clubId);
+                  nextJoined.push(clubId);
+                }
+                setJoinedClubs(nextJoined);
+                return;
+              }
+            }
+          } catch (_e) {
+            console.debug('Retry to fetch joined clubs after refresh failed', _e);
+          }
+        }
       }
 
       try {
@@ -189,8 +233,12 @@ function ConnectXPage() {
       }
     }
 
-    loadClubs();
-    loadJoinedClubs();
+    // attempt to refresh user from token before loading joined clubs
+    (async () => {
+      await ensureUserFromServer();
+      await loadClubs();
+      await loadJoinedClubs();
+    })();
 
     return () => {
       mounted = false;
@@ -212,17 +260,30 @@ function ConnectXPage() {
   async function joinClub(clubId) {
     const normalizedId = normalizeClubId(clubId);
     if (!normalizedId) return;
-
     try {
+      console.debug('Attempting to join club:', normalizedId);
       await campusAPI.joinClub(normalizedId);
-    } catch (_error) {
-      // keep the UI usable even if the network fails, but still scope the cache to this user
+      // refresh authoritative joined list from server
+      try {
+        const serverJoined = await campusAPI.getJoinedClubs();
+        const nextJoined = [];
+        const seen = new Set();
+        for (const club of serverJoined) {
+          const cid = normalizeClubId(club?.id || club?.clubId || club);
+          if (!cid || seen.has(cid)) continue;
+          seen.add(cid);
+          nextJoined.push(cid);
+        }
+        setJoinedClubs(nextJoined);
+      } catch (err) {
+        // fallback to adding locally when refresh failed
+        setJoinedClubs((prev) => (prev.includes(normalizedId) ? prev : [...prev, normalizedId]));
+      }
+    } catch (err) {
+      console.error('Join club failed', err, err?.status, err?.data);
+      // still update local state so UI is responsive
+      setJoinedClubs((prev) => (prev.includes(normalizedId) ? prev : [...prev, normalizedId]));
     }
-
-    setJoinedClubs((prev) => {
-      if (prev.includes(normalizedId)) return prev;
-      return [...prev, normalizedId];
-    });
 
     setSelectedView(normalizedId);
   }

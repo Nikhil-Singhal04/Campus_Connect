@@ -8,7 +8,7 @@
                     "stop":  "docker-compose down",
                     "start:background":  "docker-compose up -d",
                     "start:windows":  "powershell -ExecutionPolicy Bypass -File ./run-backend-final.ps1",
-                    "start":  "docker-compose up",
+                    "start":  "powershell -ExecutionPolicy Bypass -File ./run-backend-final.ps1",
                     "start:unix":  "bash ./run-backend-final.sh"
                 }
 }
