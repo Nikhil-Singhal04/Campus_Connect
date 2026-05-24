@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -29,7 +29,7 @@ const {
   JWT_SIGNUP_PROOF_EXPIRY = "15m",
   OTP_EXPIRY_MINUTES = "10",
   OTP_PEPPER,
-  REQUIRE_EMAIL_OTP = "false",
+  REQUIRE_EMAIL_OTP = "true",
   DEV_ADMIN_KEY = "",
   ADMIN_EMAIL = "",
   ADMIN_PASSWORD = "",
@@ -103,7 +103,6 @@ function isPrivateNetworkOrigin(origin) {
 }
 
 app.use(express.json({ limit: "5mb" }));
-app.use(express.static(frontendDir));
 app.use(
   cors({
     origin(origin, callback) {

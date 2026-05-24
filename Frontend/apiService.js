@@ -6,12 +6,12 @@
 function resolveApiBase() {
   const override = window.__CAMPUS_CONNECT_API_BASE__ || window.CAMPUS_CONNECT_API_BASE;
   if (override) {
-    return String(override).replace(/\/$/, '');
+    return String(override).replace(/\/$/, "");
   }
 
-  const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+  const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
   if (isLocalhost) {
-    return 'http://localhost:4000/api';
+    return "http://localhost:4000/api";
   }
 
   return `${window.location.origin}/api`;
@@ -96,10 +96,17 @@ class CampusConnectAPI {
         headers
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (_error) {
+        data = { _raw: text };
+      }
 
       if (!response.ok) {
-        const error = new Error(data.message || "API request failed");
+        const errMsg = (data && data.message) || (data && data._raw) || "API request failed";
+        const error = new Error(errMsg);
         error.status = response.status;
         error.data = data;
         throw error;
