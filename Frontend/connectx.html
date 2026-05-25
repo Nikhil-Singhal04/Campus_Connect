@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-screen overflow-hidden">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,6 +14,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
+      darkMode: ['class', '[data-cc-theme="dark"]'],
       theme: {
         extend: {
           fontFamily: {
@@ -21,12 +22,18 @@
             body: ["Manrope", "sans-serif"]
           },
           animation: {
-            fadeUp: "fadeUp .65s ease forwards"
+            fadeUp: "fadeUp .65s ease forwards",
+            heartPop: "heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards"
           },
           keyframes: {
             fadeUp: {
               "0%": { opacity: "0", transform: "translateY(12px)" },
               "100%": { opacity: "1", transform: "translateY(0)" }
+            },
+            heartPop: {
+              "0%": { transform: "scale(1)" },
+              "50%": { transform: "scale(1.45)" },
+              "100%": { transform: "scale(1)" }
             }
           }
         }
@@ -35,7 +42,17 @@
   </script>
   <script src="theme.js"></script>
 </head>
-<body class="font-body bg-[radial-gradient(circle_at_top_left,#f6fbff_0%,#ebf6ff_40%,#e5f3ff_100%)] text-[#1f3149] antialiased">
+<body class="font-body bg-[radial-gradient(circle_at_top_left,#f6fbff_0%,#ebf6ff_40%,#e5f3ff_100%)] dark:bg-[radial-gradient(circle_at_top_left,#080e1a_0%,#0d1527_40%,#111a2e_100%)] text-[#1f3149] dark:text-[#e2eaf5] antialiased h-screen overflow-hidden relative">
+  <script>
+    window.scrollTo(0, 0);
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+  </script>
+  <!-- Soft Glowing Backdrops -->
+  <div class="absolute top-[-10%] left-[10%] w-[35rem] h-[35rem] bg-gradient-to-tr from-[#0e8f84]/10 to-[#36cfc0]/10 dark:from-[#0e8f84]/5 dark:to-[#36cfc0]/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+  <div class="absolute top-[30%] right-[10%] w-[40rem] h-[40rem] bg-gradient-to-tr from-indigo-400/8 to-purple-400/8 dark:from-indigo-600/4 dark:to-purple-600/4 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+  
   <div id="root"></div>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>

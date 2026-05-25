@@ -22,16 +22,18 @@ function normalizePostRow(row) {
     createdAt: row.createdAt,
     likes: Number(row.likes || 0),
     club: normalizeClubId(row.club),
+    image: row.image || null,
     comments: []
   };
 }
 
-async function ensureCommunityClubColumn() {
+async function ensureCommunityColumns() {
   await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS club TEXT`);
+  await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS image TEXT`);
 }
 
-ensureCommunityClubColumn().catch((error) => {
-  console.error('Failed to ensure community_posts.club column', error);
+ensureCommunityColumns().catch((error) => {
+  console.error('Failed to ensure community_posts columns', error);
 });
 
 // List posts
@@ -43,6 +45,7 @@ router.get('/posts', (req, res) => {
                 p.author_name AS "authorName",
                 p.text,
                 p.club,
+                p.image,
                 p.created_at AS "createdAt",
                 COALESCE(l.like_count, 0) AS likes
          FROM community_posts p
@@ -94,11 +97,13 @@ router.post('/posts', requireSession, (req, res) => {
   (async () => {
     try {
       const text = String(req.body.text || '').trim();
+      const image = req.body.image || null;
       const club = normalizeClubId(req.body.club);
-      if (!text) return res.status(400).json({ message: 'Post text is required.' });
+      if (!text && !image) return res.status(400).json({ message: 'Post text or image is required.' });
 
       if (club) {
-        const clubRow = await get(`SELECT id FROM clubs WHERE id = ?`, [club]);
+        const canonical = club === 'entre' ? 'entrepreneurship' : club === 'culture' ? 'cultural' : club;
+        const clubRow = await get(`SELECT id FROM clubs WHERE id = ?`, [canonical]);
         if (!clubRow) {
           return res.status(404).json({ message: 'Club not found.' });
         }
@@ -118,10 +123,10 @@ router.post('/posts', requireSession, (req, res) => {
       const authorName = String(req.body.author || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Student').trim();
       const createdAt = Date.now();
       const result = await run(
-        `INSERT INTO community_posts (author_user_id, author_name, text, club, like_count, created_at)
-         VALUES (?, ?, ?, ?, 0, ?)
-         RETURNING id, author_name, text, club, created_at, like_count`,
-        [req.sessionUser.userId, authorName, text, club, createdAt]
+        `INSERT INTO community_posts (author_user_id, author_name, text, club, image, like_count, created_at)
+         VALUES (?, ?, ?, ?, ?, 0, ?)
+         RETURNING id, author_name, text, club, image, created_at, like_count`,
+        [req.sessionUser.userId, authorName, text, club, image, createdAt]
       );
 
       const postId = result.lastID;
@@ -130,6 +135,7 @@ router.post('/posts', requireSession, (req, res) => {
                 author_name AS "authorName",
                 text,
                 club,
+                image,
                 created_at AS "createdAt",
                 like_count AS likes
          FROM community_posts

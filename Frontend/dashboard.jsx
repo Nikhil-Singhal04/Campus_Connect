@@ -326,7 +326,6 @@ function DashboardPage() {
             </div>
             <div className="flex items-center gap-2">
               <a href="connectx.html" className="hidden md:inline-flex items-center rounded-full px-3 py-2 text-sm font-medium bg-white text-[#1f3149] border border-[#d5e2ef] hover:bg-[#f5fbff]">ConnectX</a>
-              <a href="clubs.html" className="hidden md:inline-flex items-center rounded-full px-3 py-2 text-sm font-medium bg-white text-[#1f3149] border border-[#d5e2ef] hover:bg-[#f5fbff]">Clubs</a>
             </div>
             <div className="relative flex items-center gap-2" ref={profileMenuRef}>
               <button
