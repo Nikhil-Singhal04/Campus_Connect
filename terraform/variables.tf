@@ -44,7 +44,7 @@ variable "otp_pepper" {
 variable "require_email_otp" {
   type        = string
   description = "Require email OTP verification for signup (true or false)"
-  default     = "false"
+  default     = "true"
 }
 
 variable "admin_email" {
