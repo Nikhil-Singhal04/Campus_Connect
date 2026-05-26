@@ -1,4 +1,4 @@
-﻿require("dotenv").config();
+require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -349,6 +349,12 @@ function getSessionPayload(req) {
 // Database initialization is now in init-db.js
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "campus-connect-auth-api" });
+});
+
+app.get("/api/config", (_req, res) => {
+  res.json({
+    requireEmailOtp: emailOtpEnabled
+  });
 });
 
 app.post("/api/contact", contactLimiter, async (req, res) => {

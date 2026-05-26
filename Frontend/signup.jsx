@@ -1,14 +1,29 @@
-const { useState } = React;
+const { useState, useEffect } = React;
 
 function getThemeState() {
   return window.CampusConnectTheme?.getThemeState?.() || { isDark: false, resolved: "light" };
 }
-const REQUIRE_EMAIL_OTP = true;
 
 function SignupPage() {
   const { isDark } = getThemeState();
-  const totalSteps = REQUIRE_EMAIL_OTP ? 5 : 4;
-  const stepTitles = REQUIRE_EMAIL_OTP
+  const [requireEmailOtp, setRequireEmailOtp] = useState(true);
+
+  useEffect(() => {
+    if (window.campusAPI && typeof window.campusAPI.getConfig === "function") {
+      window.campusAPI.getConfig()
+        .then((config) => {
+          if (config && typeof config.requireEmailOtp !== "undefined") {
+            setRequireEmailOtp(config.requireEmailOtp === true || config.requireEmailOtp === "true");
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load backend config:", err);
+        });
+    }
+  }, []);
+
+  const totalSteps = requireEmailOtp ? 5 : 4;
+  const stepTitles = requireEmailOtp
     ? [
         "Choose your role",
         "Academic details",
@@ -22,7 +37,7 @@ function SignupPage() {
         "Email and password",
         "Choose username"
       ];
-  const usernameStep = REQUIRE_EMAIL_OTP ? 5 : 4;
+  const usernameStep = requireEmailOtp ? 5 : 4;
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -179,7 +194,7 @@ function SignupPage() {
       return "";
     }
 
-    if (REQUIRE_EMAIL_OTP && currentStep === 4) {
+    if (requireEmailOtp && currentStep === 4) {
       if (!isCodeSent) {
         return "Please send the verification code to your email first.";
       }
@@ -285,7 +300,7 @@ function SignupPage() {
       setMessage({ text: "", type: "idle" });
 
       const response = await campusAPI.register({
-        signupProofToken: REQUIRE_EMAIL_OTP ? signupProofToken : null,
+        signupProofToken: requireEmailOtp ? signupProofToken : null,
         accountType: formData.accountType,
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
@@ -569,7 +584,7 @@ function SignupPage() {
               </div>
             )}
 
-            {REQUIRE_EMAIL_OTP && step === 4 && (
+            {requireEmailOtp && step === 4 && (
               <div className="space-y-4">
                 <p className="text-sm text-[#50647d]">
                   Verify your email <span className="font-semibold text-[#1a2a3d]">{formData.email || "(not set)"}</span>

@@ -474,6 +474,13 @@ class CampusConnectAPI {
     return this.request("/health");
   }
 
+  /**
+   * Get application configuration
+   */
+  async getConfig() {
+    return this.request("/config");
+  }
+
   // ============ ConnectX Endpoints ============
   async getConnectXPosts() {
     try { const response = await this.request('/connectx/posts'); return response.posts || []; } catch (e) { throw e; }
