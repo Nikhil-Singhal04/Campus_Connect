@@ -28,3 +28,34 @@ variable "app_name" {
   description = "Application name for tagging and prefixing resource names"
   default     = "campus-connect"
 }
+
+variable "jwt_secret" {
+  type        = string
+  description = "JWT secret key for token authentication"
+  default     = "your_super_secret_jwt_key_change_this_in_production_1234567890"
+}
+
+variable "otp_pepper" {
+  type        = string
+  description = "Salt/Pepper value for hashing OTP codes"
+  default     = "your_otp_pepper_secret_change_this_in_production_1234567890"
+}
+
+variable "require_email_otp" {
+  type        = string
+  description = "Require email OTP verification for signup (true or false)"
+  default     = "false"
+}
+
+variable "admin_email" {
+  type        = string
+  description = "Default admin user email address"
+  default     = "admin@campus-connect.local"
+}
+
+variable "admin_password" {
+  type        = string
+  description = "Default admin user password"
+  default     = "admin123456"
+}
+

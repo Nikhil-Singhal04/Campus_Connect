@@ -80,7 +80,12 @@ resource "aws_ecs_task_definition" "backend" {
         { name = "DB_NAME", value = aws_db_instance.postgres.db_name },
         { name = "DB_USER", value = aws_db_instance.postgres.username },
         { name = "DB_PASSWORD", value = var.db_password },
-        { name = "JWT_SECRET", value = "CampusConnectSuperSecretSecret123!" } // Default token key
+        { name = "JWT_SECRET", value = var.jwt_secret },
+        { name = "OTP_PEPPER", value = var.otp_pepper },
+        { name = "REQUIRE_EMAIL_OTP", value = var.require_email_otp },
+        { name = "ADMIN_EMAIL", value = var.admin_email },
+        { name = "ADMIN_PASSWORD", value = var.admin_password },
+        { name = "FRONTEND_ORIGIN", value = "https://${var.domain_name},https://www.${var.domain_name},http://localhost:5500,http://127.0.0.1:5500" }
       ]
       logConfiguration = {
         logDriver = "awslogs"

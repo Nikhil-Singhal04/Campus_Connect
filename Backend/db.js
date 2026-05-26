@@ -1,11 +1,17 @@
 const { Pool } = require("pg");
 
+const isProduction = process.env.NODE_ENV === "production" || 
+                     (process.env.DB_HOST && 
+                      process.env.DB_HOST !== "localhost" && 
+                      process.env.DB_HOST !== "127.0.0.1");
+
 const pool = new Pool({
   host: process.env.DB_HOST || "localhost",
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || "campus_connect",
   user: process.env.DB_USER || "postgres",
   password: process.env.DB_PASSWORD || "postgres",
+  ssl: isProduction ? { rejectUnauthorized: false } : false
 });
 
 // Test connection
