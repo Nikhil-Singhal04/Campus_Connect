@@ -85,6 +85,8 @@ resource "aws_ecs_task_definition" "backend" {
         { name = "REQUIRE_EMAIL_OTP", value = var.require_email_otp },
         { name = "ADMIN_EMAIL", value = var.admin_email },
         { name = "ADMIN_PASSWORD", value = var.admin_password },
+        { name = "RESEND_API_KEY", value = var.resend_api_key },
+        { name = "RESEND_FROM_EMAIL", value = var.resend_from_email },
         { name = "FRONTEND_ORIGIN", value = "https://${var.domain_name},https://www.${var.domain_name},http://localhost:5500,http://127.0.0.1:5500" }
       ]
       logConfiguration = {

@@ -59,3 +59,17 @@ variable "admin_password" {
   default     = "admin123456"
 }
 
+variable "resend_api_key" {
+  type        = string
+  description = "Resend API Key for email OTP verification"
+  sensitive   = true
+  default     = "re_Ta5RBexe_DF3fVqNPt61GLoLUG1HX3yWy"
+}
+
+variable "resend_from_email" {
+  type        = string
+  description = "From email address for Resend notifications"
+  default     = "Campus Connect <noreply@campusconnect.cfd>"
+}
+
+
