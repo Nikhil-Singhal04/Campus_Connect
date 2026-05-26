@@ -1,3 +1,15 @@
-﻿# Local environment secrets
+# Local environment secrets
 .env
 Backend/.env
+
+# Dependencies and build tools
+node_modules/
+dist/
+.cache/
+
+# Terraform
+**/terraform/.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.tfstate.lock.info

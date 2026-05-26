@@ -140,31 +140,31 @@ function App() {
       <header className="fixed left-0 top-0 z-50 w-full">
         <div className={`${headerStripClasses} transition-all duration-300 ${isScrolled ? (isDark ? "shadow-[0_14px_30px_rgba(0,0,0,0.28)] ring-white/12" : "shadow-[0_14px_30px_rgba(31,49,71,0.16)] ring-[#c7d9ea]") : ""}`}>
           <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-1 md:px-6 md:py-1.5">
-          <a href="index.html" aria-label="Campus Connect Home" className="inline-flex shrink-0 items-center gap-3 overflow-visible">
-            <img src="campus-connect-logo.svg" alt="Campus Connect" className="h-14 w-auto origin-left scale-110 rounded-md md:h-16 md:scale-125" />
-          </a>
-
-          <nav className={`hidden items-center gap-1 rounded-full p-1 text-sm font-semibold lg:flex ${isDark ? "bg-white/5 text-[#dbe7f4] ring-1 ring-white/10" : "bg-[#ffffffbf] text-[#314860] ring-1 ring-[#dce6f0]"}`}>
-            <a href="index.html" className={`rounded-full px-4 py-2 transition ${isDark ? "hover:bg-white/10 hover:text-white" : "hover:bg-[#ecf7f5] hover:text-[#0e8f84]"}`}>Home</a>
-            <a href="#events" className={`rounded-full px-4 py-2 transition ${isDark ? "hover:bg-white/10 hover:text-white" : "hover:bg-[#ecf7f5] hover:text-[#0e8f84]"}`}>Events</a>
-            <a href="#about" className={`rounded-full px-4 py-2 transition ${isDark ? "hover:bg-white/10 hover:text-white" : "hover:bg-[#ecf7f5] hover:text-[#0e8f84]"}`}>About</a>
-            <a href="#contact" className={`rounded-full px-4 py-2 transition ${isDark ? "hover:bg-white/10 hover:text-white" : "hover:bg-[#ecf7f5] hover:text-[#0e8f84]"}`}>Contact</a>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <a
-              href="signin.html"
-              className={`inline-flex rounded-lg border px-3 py-2 text-sm font-semibold transition md:px-4 ${isDark ? "border-white/10 bg-white/5 text-[#eef4fb] hover:border-[#73d6cb]/40 hover:text-white" : "border-[#c8d5e3] bg-[#ffffff] text-[#1f3147] hover:border-[#0ea59680] hover:text-[#0e8f84]"}`}
-            >
-              Sign In
+            <a href="index.html" aria-label="Campus Connect Home" className="inline-flex shrink-0 items-center gap-3 overflow-visible">
+              <img src="campus-connect-logo.svg" alt="Campus Connect" className="h-14 w-auto origin-left scale-110 rounded-md md:h-16 md:scale-125" />
             </a>
-            <a
-              href="signup.html"
-              className="rounded-lg bg-[linear-gradient(135deg,#169f91,#36cfc0)] px-3 py-2 text-sm font-semibold text-[#ffffff] shadow-[0_8px_16px_rgba(22,159,145,0.2)] transition hover:-translate-y-0.5 hover:brightness-105 md:px-4"
-            >
-              Get Started
-            </a>
-          </div>
+
+            <nav className={`hidden items-center gap-1 rounded-full p-1 text-sm font-semibold lg:flex ${isDark ? "bg-white/5 text-[#dbe7f4] ring-1 ring-white/10" : "bg-[#ffffffbf] text-[#314860] ring-1 ring-[#dce6f0]"}`}>
+              <a href="index.html" className={`rounded-full px-4 py-2 transition ${isDark ? "hover:bg-white/10 hover:text-white" : "hover:bg-[#ecf7f5] hover:text-[#0e8f84]"}`}>Home</a>
+              <a href="#events" className={`rounded-full px-4 py-2 transition ${isDark ? "hover:bg-white/10 hover:text-white" : "hover:bg-[#ecf7f5] hover:text-[#0e8f84]"}`}>Events</a>
+              <a href="#about" className={`rounded-full px-4 py-2 transition ${isDark ? "hover:bg-white/10 hover:text-white" : "hover:bg-[#ecf7f5] hover:text-[#0e8f84]"}`}>About</a>
+              <a href="#contact" className={`rounded-full px-4 py-2 transition ${isDark ? "hover:bg-white/10 hover:text-white" : "hover:bg-[#ecf7f5] hover:text-[#0e8f84]"}`}>Contact</a>
+            </nav>
+
+            <div className="flex items-center gap-2">
+              <a
+                href="signin.html"
+                className={`inline-flex rounded-lg border px-3 py-2 text-sm font-semibold transition md:px-4 ${isDark ? "border-white/10 bg-white/5 text-[#eef4fb] hover:border-[#73d6cb]/40 hover:text-white" : "border-[#c8d5e3] bg-[#ffffff] text-[#1f3147] hover:border-[#0ea59680] hover:text-[#0e8f84]"}`}
+              >
+                Sign In
+              </a>
+              <a
+                href="signup.html"
+                className="rounded-lg bg-[linear-gradient(135deg,#169f91,#36cfc0)] px-3 py-2 text-sm font-semibold text-[#ffffff] shadow-[0_8px_16px_rgba(22,159,145,0.2)] transition hover:-translate-y-0.5 hover:brightness-105 md:px-4"
+              >
+                Get Started
+              </a>
+            </div>
           </div>
         </div>
       </header>
@@ -253,13 +253,13 @@ function App() {
               The passionate creators and designers who built Campus Connect to simplify event discovery and community building.
             </p>
 
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 max-w-[800px] mx-auto">
+            <div className="mt-10 grid gap-6 md:grid-cols-3 max-w-[1100px] mx-auto">
               {/* Nikhil Singhal */}
               <div className={`group rounded-2xl border p-6 flex flex-col items-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${isDark ? "border-white/10 bg-[#111c2d]/90 hover:border-[#79d9cf]/40" : "border-[#d2dfeb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)] hover:border-[#9ed8cf]"}`}>
                 <div className="relative mb-4">
                   <div className="absolute -inset-0.5 rounded-full bg-[linear-gradient(135deg,#0ea596,#2563eb)] opacity-40 blur group-hover:opacity-80 transition duration-300" />
                   <img
-                    src="assets/dev_nikhil.png"
+                    src="assets/dev_nikhil.jpg"
                     alt="Nikhil Singhal"
                     className="relative h-24 w-24 rounded-full border-2 border-white/20 object-cover shadow-sm"
                   />
@@ -292,7 +292,7 @@ function App() {
                       <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.646.64.699 1.026 1.592 1.026 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.137 20.162 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
                     </svg>
                   </a>
-                  <a
+                  {/* <a
                     href="https://www.instagram.com/nikhilsinghal30/"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -302,28 +302,28 @@ function App() {
                     <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
                       <path d="M7 2C4.24 2 2 4.24 2 7v10c0 2.76 2.24 5 5 5h10c2.76 0 5-2.24 5-5V7c0-2.76-2.24-5-5-5H7zm11 2a2 2 0 110 4 2 2 0 010-4zm-6 2a6 6 0 110 12 6 6 0 010-12zm0 2.2A3.8 3.8 0 1012 16a3.8 3.8 0 000-7.6z" />
                     </svg>
-                  </a>
+                  </a> */}
                 </div>
               </div>
 
-              {/* Aanya Sharma */}
+              {/* Pratik Kumar */}
               <div className={`group rounded-2xl border p-6 flex flex-col items-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${isDark ? "border-white/10 bg-[#111c2d]/90 hover:border-[#79d9cf]/40" : "border-[#d2dfeb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)] hover:border-[#9ed8cf]"}`}>
                 <div className="relative mb-4">
                   <div className="absolute -inset-0.5 rounded-full bg-[linear-gradient(135deg,#0ea596,#2563eb)] opacity-40 blur group-hover:opacity-80 transition duration-300" />
                   <img
-                    src="assets/dev_collaborator.png"
-                    alt="Aanya Sharma"
+                    src="assets/pratik.jpeg"
+                    alt="Pratik Kumar"
                     className="relative h-24 w-24 rounded-full border-2 border-white/20 object-cover shadow-sm"
                   />
                 </div>
-                <h4 className={`text-lg font-bold ${textPrimary}`}>Aanya Sharma</h4>
-                <p className="text-sm font-semibold text-[#0ea596] mt-1">Lead UI/UX Designer</p>
+                <h4 className={`text-lg font-bold ${textPrimary}`}>Pratik Kumar</h4>
+                <p className="text-sm font-semibold text-[#0ea596] mt-1">Frontend Developer</p>
                 <p className={`text-xs mt-3 leading-5 text-center ${textSoft}`}>
-                  Creative strategist focusing on pixel-perfect layouts, responsive design, and accessible interfaces.
+                  CSE Student passionate about responsive designs, interactive user experiences, and pixel-perfect UIs.
                 </p>
                 <div className="flex gap-3 mt-4">
                   <a
-                    href="https://www.linkedin.com/"
+                    href="https://www.linkedin.com/in/pratik70/?isSelfProfile=false"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`rounded-full p-2 transition ${isDark ? "bg-white/5 hover:bg-white/10 text-[#c9d8e7] hover:text-white" : "bg-white hover:bg-[#ecf7f5] text-[#314860] hover:text-[#0e8f84] border border-[#cfdeeb]"}`}
@@ -334,7 +334,48 @@ function App() {
                     </svg>
                   </a>
                   <a
-                    href="https://github.com/"
+                    href="https://github.com/pratik-70/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`rounded-full p-2 transition ${isDark ? "bg-white/5 hover:bg-white/10 text-[#c9d8e7] hover:text-white" : "bg-white hover:bg-[#ecf7f5] text-[#314860] hover:text-[#0e8f84] border border-[#cfdeeb]"}`}
+                    aria-label="GitHub"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.646.64.699 1.026 1.592 1.026 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.137 20.162 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+              {/* Abhishek Dixit */}
+              <div className={`group rounded-2xl border p-6 flex flex-col items-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${isDark ? "border-white/10 bg-[#111c2d]/90 hover:border-[#79d9cf]/40" : "border-[#d2dfeb] bg-[linear-gradient(180deg,#ffffff,#f7fbff)] hover:border-[#9ed8cf]"}`}>
+                <div className="relative mb-4">
+                  <div className="absolute -inset-0.5 rounded-full bg-[linear-gradient(135deg,#0ea596,#2563eb)] opacity-40 blur group-hover:opacity-80 transition duration-300" />
+                  <img
+                    src="assets/abhishek.jpeg"
+                    alt="Abhishek Dixit"
+                    className="relative h-24 w-24 rounded-full border-2 border-white/20 object-cover shadow-sm"
+                  />
+                </div>
+                <h4 className={`text-lg font-bold ${textPrimary}`}>Abhishek Dixit</h4>
+                <p className="text-sm font-semibold text-[#0ea596] mt-1">Database & DevOps Specialist</p>
+                <p className={`text-xs mt-3 leading-5 text-center ${textSoft}`}>
+                  CSE Student focusing on containerization, scalable database schema design, and CI/CD pipelines.
+                </p>
+                <div className="flex gap-3 mt-4">
+                  <a
+                    href="https://www.linkedin.com/in/abhishek-dixitt-/?isSelfProfile=false"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`rounded-full p-2 transition ${isDark ? "bg-white/5 hover:bg-white/10 text-[#c9d8e7] hover:text-white" : "bg-white hover:bg-[#ecf7f5] text-[#314860] hover:text-[#0e8f84] border border-[#cfdeeb]"}`}
+                    aria-label="LinkedIn"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+                      <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.3 8h4.4v14H.3V8zm7.2 0h4.2v1.9h.06c.58-1.1 2-2.26 4.12-2.26 4.4 0 5.22 2.9 5.22 6.66V22h-4.4v-6.8c0-1.62-.03-3.7-2.26-3.7-2.26 0-2.6 1.77-2.6 3.58V22H7.5V8z" />
+                    </svg>
+                  </a>
+                  <a
+                    href="https://github.com/AbhishekDixitt18"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`rounded-full p-2 transition ${isDark ? "bg-white/5 hover:bg-white/10 text-[#c9d8e7] hover:text-white" : "bg-white hover:bg-[#ecf7f5] text-[#314860] hover:text-[#0e8f84] border border-[#cfdeeb]"}`}
@@ -360,13 +401,13 @@ function App() {
               </p>
 
               <div className="mt-5">
-                  <button
-                    type="button"
-                    onClick={() => setShowContactForm(true)}
-                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${isDark ? "border-white/10 bg-white/5 text-[#eef4fb] hover:border-[#73d6cb]/40 hover:text-white" : "border-[#c8d5e3] bg-[#ffffff] text-[#1f3147] hover:border-[#0ea59680] hover:text-[#0e8f84]"}`}
-                  >
-                    Contact us
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => setShowContactForm(true)}
+                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${isDark ? "border-white/10 bg-white/5 text-[#eef4fb] hover:border-[#73d6cb]/40 hover:text-white" : "border-[#c8d5e3] bg-[#ffffff] text-[#1f3147] hover:border-[#0ea59680] hover:text-[#0e8f84]"}`}
+                >
+                  Contact us
+                </button>
               </div>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -502,7 +543,7 @@ function App() {
         </section>
       </main>
 
-  <footer className={`relative z-10 mx-auto mt-16 w-[calc(100%-1rem)] max-w-[1200px] px-6 pb-8 pt-10 text-sm shadow-[0_14px_36px_rgba(31,49,71,0.08)] md:w-[calc(100%-2rem)] md:px-10 ${panelClasses}`}>
+      <footer className={`relative z-10 mx-auto mt-16 w-[calc(100%-1rem)] max-w-[1200px] px-6 pb-8 pt-10 text-sm shadow-[0_14px_36px_rgba(31,49,71,0.08)] md:w-[calc(100%-2rem)] md:px-10 ${panelClasses}`}>
         <div className="grid gap-10 md:grid-cols-[2.2fr_1.4fr]">
           <div>
             <div className="flex items-center gap-3">
