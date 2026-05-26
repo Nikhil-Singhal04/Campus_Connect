@@ -55,8 +55,7 @@ if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
 }
 
 if (emailOtpEnabled && (!RESEND_API_KEY || !RESEND_FROM_EMAIL)) {
-  console.error("REQUIRE_EMAIL_OTP=true requires RESEND_API_KEY and RESEND_FROM_EMAIL.");
-  process.exit(1);
+  console.warn("WARNING: REQUIRE_EMAIL_OTP=true but RESEND_API_KEY/RESEND_FROM_EMAIL not set. OTP codes will be logged to console instead of emailed.");
 }
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
