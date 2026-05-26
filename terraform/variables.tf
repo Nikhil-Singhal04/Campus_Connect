@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "domain_name" {
   type        = string
   description = "Custom domain name purchased from Hostinger"
-  default     = "campusconnect.online" # Placeholder domain
+  default     = "campusconnect.cfd" # Placeholder domain
 }
 
 variable "db_username" {
@@ -20,7 +20,7 @@ variable "db_password" {
   type        = string
   description = "PostgreSQL database admin password (should be overridden in production)"
   sensitive   = true
-  default     = "CampusConnectPass123!"
+  default     = "Nikhil09Abhi18"
 }
 
 variable "app_name" {

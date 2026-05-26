@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // AWS Settings
-        AWS_ACCOUNT_ID             = '123456789012' // Replace with your AWS Account ID
+        AWS_ACCOUNT_ID             = '959689755891' // Replace with your AWS Account ID
         AWS_DEFAULT_REGION         = 'us-east-1'    // Replace with your target AWS region
         
         // ECR & ECS Configuration
@@ -12,8 +12,8 @@ pipeline {
         ECS_SERVICE_NAME           = 'campus-connect-backend-service'
         
         // Frontend S3 & CloudFront Configuration
-        S3_BUCKET_NAME             = 'campus-connect-frontend-bucket'
-        CLOUDFRONT_DISTRIBUTION_ID = 'E123456789ABCD' // Replace with your CloudFront ID
+        S3_BUCKET_NAME             = 'campus-connect-frontend-gguqkb'
+        CLOUDFRONT_DISTRIBUTION_ID = 'E94TLMKWWXYDL'    // Replace with your CloudFront ID
         
 
     }
