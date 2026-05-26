@@ -1,6 +1,8 @@
 # Local environment secrets
 .env
 Backend/.env
+terraform/variables.tf
+
 
 # Dependencies and build tools
 node_modules/
