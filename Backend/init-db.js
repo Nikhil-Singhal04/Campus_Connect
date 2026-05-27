@@ -106,11 +106,17 @@ async function initializeDatabase() {
         club TEXT,
         like_count INTEGER NOT NULL DEFAULT 0,
         created_at BIGINT NOT NULL,
+        reply_to_id INTEGER,
+        reply_to_author TEXT,
+        reply_to_text TEXT,
         FOREIGN KEY (author_user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
 
     await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS club TEXT`);
+    await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS reply_to_id INTEGER`);
+    await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS reply_to_author TEXT`);
+    await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS reply_to_text TEXT`);
 
     // Create community comments table
     await run(`

@@ -130,6 +130,7 @@ function ConnectXPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedView, setSelectedView] = useState('home');
   const [availableClubs, setAvailableClubs] = useState(DEFAULT_CLUBS);
+  const [replyingTo, setReplyingTo] = useState(null);
 
   const [joinedClubs, setJoinedClubs] = useState(() => {
     try {
@@ -166,7 +167,7 @@ function ConnectXPage() {
     return String(extra.profileImage || '').trim();
   }, [user?.id, user?.email, user?.username]);
 
-  // Load posts on mount
+  // Load posts on mount and set up periodic polling
   useEffect(() => {
     let mounted = true;
 
@@ -188,8 +189,14 @@ function ConnectXPage() {
     }
 
     loadPosts();
+
+    const interval = setInterval(() => {
+      loadPosts();
+    }, 4000);
+
     return () => {
       mounted = false;
+      clearInterval(interval);
     };
   }, []);
 
@@ -367,7 +374,10 @@ function ConnectXPage() {
       club,
       createdAt: Date.now(),
       likes: 0,
-      comments: []
+      comments: [],
+      replyToId: replyingTo ? replyingTo.id : null,
+      replyToAuthor: replyingTo ? replyingTo.author : null,
+      replyToText: replyingTo ? replyingTo.text : null
     };
 
     campusAPI.createConnectXPost(newPost).then((res) => {
@@ -380,6 +390,8 @@ function ConnectXPage() {
 
     setText('');
     setPostImage(null);
+    setReplyingTo(null);
+    setTimeout(() => scrollToBottom(true), 50);
   }
 
   function likePost(id) {
@@ -441,15 +453,23 @@ function ConnectXPage() {
 
   const messagesContainerRef = useRef(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (force = false) => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      const container = messagesContainerRef.current;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200;
+      if (force || isNearBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
     }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [filtered.length, selectedView]);
+    scrollToBottom(false);
+  }, [filtered.length]);
+
+  useEffect(() => {
+    scrollToBottom(true);
+  }, [selectedView]);
 
   return (
     <div className="h-screen flex flex-col bg-[#f0f2f5] dark:bg-[#0b141a] overflow-hidden text-[#1f3149] dark:text-[#e2eaf5] transition-colors duration-300">
@@ -571,6 +591,7 @@ function ConnectXPage() {
                       clubLabel={getClubLabel(post.club)}
                       onLike={() => likePost(post.id)}
                       onComment={(txt) => addComment(post.id, txt)}
+                      onReply={setReplyingTo}
                     />
                   ))
                 )}
@@ -578,6 +599,25 @@ function ConnectXPage() {
 
               {/* Sticky bottom composer */}
               <div className="p-3 border-t border-slate-200/50 dark:border-slate-800/80 bg-[#f0f2f5] dark:bg-[#202c33] flex-shrink-0">
+                {replyingTo && (
+                  <div className="mb-2 bg-white dark:bg-[#111b21] rounded-xl p-2.5 flex items-center justify-between border-l-4 border-[#00a884] border border-slate-200 dark:border-slate-800/80 shadow-sm animate-fadeUp">
+                    <div className="flex-1 min-w-0 pr-4">
+                      <span className="text-[11px] font-extrabold text-[#00a884] dark:text-emerald-400 block">
+                        Replying to {replyingTo.author}
+                      </span>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate font-semibold">
+                        {replyingTo.text}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setReplyingTo(null)}
+                      className="h-6 w-6 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950 dark:hover:text-red-400 flex items-center justify-center text-xs transition duration-200"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
                 {postImage && (
                   <div className="mb-2 bg-white dark:bg-slate-900 rounded-xl p-2.5 flex items-center justify-between border border-slate-200 dark:border-slate-800/80 shadow-inner max-w-sm animate-fadeUp">
                     <div className="flex items-center gap-2.5">
@@ -660,10 +700,11 @@ function BrowseClubsView({ availableClubs, joinedClubs, onJoin }) {
   );
 }
 
-function PostCard({ post, displayName, clubLabel, onLike, onComment }) {
+function PostCard({ post, displayName, clubLabel, onLike, onComment, onReply }) {
   const [commentOpen, setCommentOpen] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isLiked, setIsLiked] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   function submitComment(e) {
     e.preventDefault();
@@ -680,6 +721,17 @@ function PostCard({ post, displayName, clubLabel, onLike, onComment }) {
     onLike();
   };
 
+  const handleCopyClick = () => {
+    const textToCopy = post.text || '';
+    if (!textToCopy) return;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch((err) => {
+      console.error('Failed to copy message:', err);
+    });
+  };
+
   const isSelf = post.author === displayName;
   const clubTheme = post.club ? getClubTheme(post.club) : null;
 
@@ -691,6 +743,17 @@ function PostCard({ post, displayName, clubLabel, onLike, onComment }) {
           <span className="font-extrabold text-xs text-[#00a884] dark:text-emerald-400 mb-1.5 block">
             {post.author}
           </span>
+        )}
+
+        {post.replyToId && (
+          <div className="mb-2 p-2 rounded-lg bg-black/5 dark:bg-white/5 border-l-4 border-[#00a884] text-[11px] max-w-full">
+            <span className="font-extrabold text-[#00a884] dark:text-emerald-400 block mb-0.5 text-[10px]">
+              {post.replyToAuthor}
+            </span>
+            <p className="text-slate-600 dark:text-slate-350 truncate font-semibold leading-tight">
+              {post.replyToText}
+            </p>
+          </div>
         )}
 
         {post.text && (
@@ -720,6 +783,22 @@ function PostCard({ post, displayName, clubLabel, onLike, onComment }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
               <span>{post.comments ? post.comments.length : 0}</span>
+            </button>
+            
+            {post.text && (
+              <button onClick={handleCopyClick} className="flex items-center gap-1 hover:text-[#00a884] dark:hover:text-emerald-400 transition" title="Copy message text">
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>{copied ? 'Copied!' : 'Copy'}</span>
+              </button>
+            )}
+
+            <button onClick={() => onReply({ id: post.id, author: post.author, text: post.text || (post.image ? '[Image]' : '') })} className="flex items-center gap-1 hover:text-[#00a884] dark:hover:text-emerald-400 transition" title="Reply to message">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
+              <span>Reply</span>
             </button>
           </div>
           <span>{formatPostDate(post.createdAt)}</span>

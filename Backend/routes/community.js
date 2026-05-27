@@ -23,6 +23,9 @@ function normalizePostRow(row) {
     likes: Number(row.likes || 0),
     club: normalizeClubId(row.club),
     image: row.image || null,
+    replyToId: row.replyToId ? Number(row.replyToId) : null,
+    replyToAuthor: row.replyToAuthor || null,
+    replyToText: row.replyToText || null,
     comments: []
   };
 }
@@ -30,6 +33,9 @@ function normalizePostRow(row) {
 async function ensureCommunityColumns() {
   await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS club TEXT`);
   await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS image TEXT`);
+  await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS reply_to_id INTEGER`);
+  await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS reply_to_author TEXT`);
+  await run(`ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS reply_to_text TEXT`);
 }
 
 ensureCommunityColumns().catch((error) => {
@@ -46,6 +52,9 @@ router.get('/posts', (req, res) => {
                 p.text,
                 p.club,
                 p.image,
+                p.reply_to_id AS "replyToId",
+                p.reply_to_author AS "replyToAuthor",
+                p.reply_to_text AS "replyToText",
                 p.created_at AS "createdAt",
                 COALESCE(l.like_count, 0) AS likes
          FROM community_posts p
@@ -121,12 +130,15 @@ router.post('/posts', requireSession, (req, res) => {
       }
 
       const authorName = String(req.body.author || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'Student').trim();
+      const replyToId = req.body.replyToId ? Number(req.body.replyToId) : null;
+      const replyToAuthor = req.body.replyToAuthor ? String(req.body.replyToAuthor).trim() : null;
+      const replyToText = req.body.replyToText ? String(req.body.replyToText).trim() : null;
       const createdAt = Date.now();
       const result = await run(
-        `INSERT INTO community_posts (author_user_id, author_name, text, club, image, like_count, created_at)
-         VALUES (?, ?, ?, ?, ?, 0, ?)
+        `INSERT INTO community_posts (author_user_id, author_name, text, club, image, like_count, created_at, reply_to_id, reply_to_author, reply_to_text)
+         VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
          RETURNING id, author_name, text, club, image, created_at, like_count`,
-        [req.sessionUser.userId, authorName, text, club, image, createdAt]
+        [req.sessionUser.userId, authorName, text, club, image, createdAt, replyToId, replyToAuthor, replyToText]
       );
 
       const postId = result.lastID;
@@ -136,6 +148,9 @@ router.post('/posts', requireSession, (req, res) => {
                 text,
                 club,
                 image,
+                reply_to_id AS "replyToId",
+                reply_to_author AS "replyToAuthor",
+                reply_to_text AS "replyToText",
                 created_at AS "createdAt",
                 like_count AS likes
          FROM community_posts
