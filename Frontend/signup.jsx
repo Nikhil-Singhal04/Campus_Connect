@@ -258,7 +258,10 @@ function SignupPage() {
       setOtpDigits(["", "", "", "", "", ""]);
       setSuccess("Verification code sent to your email.");
     } catch (_error) {
-      setError("Network error while sending verification code.");
+      const errorText = typeof Utils !== "undefined" && Utils?.formatError
+        ? Utils.formatError(_error)
+        : "Network error while sending verification code.";
+      setError(errorText);
     } finally {
       setIsBusy(false);
     }
@@ -286,7 +289,10 @@ function SignupPage() {
       setSignupProofToken(data.signupProofToken || "");
       setSuccess("Email verified successfully.");
     } catch (_error) {
-      setError("Network error while verifying code.");
+      const errorText = typeof Utils !== "undefined" && Utils?.formatError
+        ? Utils.formatError(_error)
+        : "Network error while verifying code.";
+      setError(errorText);
     } finally {
       setIsBusy(false);
     }
