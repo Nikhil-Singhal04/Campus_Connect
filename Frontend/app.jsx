@@ -98,8 +98,7 @@ function App() {
     setContactStatus({ type: "idle", text: "" });
 
     try {
-      const apiHost = window.location.hostname || "127.0.0.1";
-      const apiBase = `http://${apiHost}:4000/api`;
+      const apiBase = window.campusAPI?.baseURL || `http://${window.location.hostname || "127.0.0.1"}:4000/api`;
       const response = await fetch(`${apiBase}/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
