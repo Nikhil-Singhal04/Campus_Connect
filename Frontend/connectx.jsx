@@ -108,7 +108,7 @@ function ConnectXPage() {
 
   const STORAGE_KEY = 'cc_connectx_posts_v1';
   const joinedClubsKey = useMemo(() => `cc_joined_clubs_${resolveUserStorageId(user)}`, [user]);
-  
+
   const [posts, setPosts] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -121,7 +121,7 @@ function ConnectXPage() {
   const persistPosts = (list) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    } catch (_) {}
+    } catch (_) { }
     setPosts(list);
   };
 
@@ -130,7 +130,7 @@ function ConnectXPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedView, setSelectedView] = useState('home');
   const [availableClubs, setAvailableClubs] = useState(DEFAULT_CLUBS);
-  
+
   const [joinedClubs, setJoinedClubs] = useState(() => {
     try {
       const storageId = resolveUserStorageId(user);
@@ -145,7 +145,7 @@ function ConnectXPage() {
   const persistJoinedClubs = (list) => {
     try {
       localStorage.setItem(joinedClubsKey, JSON.stringify(list));
-    } catch (_) {}
+    } catch (_) { }
     setJoinedClubs(list);
   };
 
@@ -183,7 +183,7 @@ function ConnectXPage() {
           if (raw && mounted) {
             setPosts(JSON.parse(raw));
           }
-        } catch (_e) {}
+        } catch (_e) { }
       }
     }
 
@@ -205,7 +205,7 @@ function ConnectXPage() {
           const me = await campusAPI.getMe();
           if (mounted && me) {
             setUser(me);
-            try { localStorage.setItem('cc_user', JSON.stringify(me)); } catch (_) {}
+            try { localStorage.setItem('cc_user', JSON.stringify(me)); } catch (_) { }
           }
         }
       } catch (err) {
@@ -258,7 +258,7 @@ function ConnectXPage() {
         if (raw && mounted) {
           setJoinedClubs(JSON.parse(raw));
         }
-      } catch (_error) {}
+      } catch (_error) { }
     }
 
     (async () => {
@@ -411,7 +411,7 @@ function ConnectXPage() {
     });
   }
 
-  // Filter posts by club and search query
+  // Filter posts by club and search query, then sort chronologically (oldest first)
   const filtered = posts.filter((post) => {
     const club = normalizeClubId(post.club);
     let matchesView = false;
@@ -427,6 +427,10 @@ function ConnectXPage() {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
     return (post.text || '').toLowerCase().includes(q) || (post.author || '').toLowerCase().includes(q);
+  }).sort((a, b) => {
+    const tA = !isNaN(Number(a.createdAt)) ? Number(a.createdAt) : new Date(a.createdAt).getTime();
+    const tB = !isNaN(Number(b.createdAt)) ? Number(b.createdAt) : new Date(b.createdAt).getTime();
+    return (tA || 0) - (tB || 0);
   });
 
   const currentClubLabel = selectedView === 'home'
@@ -454,10 +458,10 @@ function ConnectXPage() {
         <div className="mx-auto max-w-[1400px] px-4 py-3 md:px-6">
           <div className="flex items-center justify-between gap-3">
             <img src="campus-connect-logo.svg" alt="Campus Connect" className="h-9 w-auto origin-left scale-105" />
-            
+
             <div className="flex items-center gap-3">
               <a href="dashboard.html" className="inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold bg-white dark:bg-slate-900 text-[#1f3149] dark:text-slate-200 border border-[#d5e2ef] dark:border-slate-800 hover:bg-[#f5fbff] dark:hover:bg-slate-800 transition duration-300 shadow-sm">Dashboard</a>
-              
+
               <button type="button" aria-label="Profile" onClick={() => { window.location.href = 'profile.html'; }} className={`inline-flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition duration-300 hover:scale-105 ${isDark ? 'border-white/10 bg-white/5 text-[#e8eef7]' : 'border-[#c9d8e7] bg-white text-[#1f3149]'}`}>
                 {profileImage ? (<img src={profileImage} alt="Profile" className="h-8 w-8 rounded-full object-cover" />) : (<svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="8" r="4" /></svg>)}
               </button>
@@ -482,7 +486,7 @@ function ConnectXPage() {
               </svg>
               Home
             </button>
-            
+
             <button onClick={() => setSelectedView('clubs')} className={`w-full text-left px-3 py-3 rounded-xl font-bold flex items-center gap-3 transition-all duration-200 ${selectedView === 'clubs' ? 'bg-[#00a884] text-white shadow-md shadow-[#00a884]/20 scale-[1.01]' : 'bg-transparent text-[#5a6f86] dark:text-slate-400 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 hover:text-[#1f3149] dark:hover:text-white'}`}>
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -583,7 +587,7 @@ function ConnectXPage() {
                     <button onClick={() => setPostImage(null)} className="h-6 w-6 rounded-full bg-slate-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-xs transition duration-200">✕</button>
                   </div>
                 )}
-                
+
                 <form onSubmit={addPost} className="flex items-center gap-2">
                   <label className="flex-shrink-0 cursor-pointer p-2 text-slate-500 hover:text-[#00a884] dark:text-slate-400 dark:hover:text-emerald-400 transition hover:scale-105">
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
@@ -636,7 +640,7 @@ function BrowseClubsView({ availableClubs, joinedClubs, onJoin }) {
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{club.description || 'Join this club to discover content and discuss topics.'}</p>
               </div>
-              
+
               <div className="mt-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-3">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${theme.badge}`}>
                   {club.label.split(' ')[0]}
@@ -682,7 +686,7 @@ function PostCard({ post, displayName, clubLabel, onLike, onComment }) {
   return (
     <div className={`flex w-full ${isSelf ? 'justify-end' : 'justify-start'} animate-fadeUp mb-2`}>
       <div className={`max-w-[75%] min-w-[220px] rounded-2xl shadow-[0_1px_1px_rgba(0,0,0,0.06)] p-3.5 relative flex flex-col ${isSelf ? 'bg-[#d9fdd3] dark:bg-[#005c4b] rounded-tr-none border border-[#c4ecd0]/60 dark:border-[#005c4b]' : 'bg-white dark:bg-[#202c33] rounded-tl-none border border-slate-100 dark:border-[#202c33]'}`}>
-        
+
         {!isSelf && (
           <span className="font-extrabold text-xs text-[#00a884] dark:text-emerald-400 mb-1.5 block">
             {post.author}
