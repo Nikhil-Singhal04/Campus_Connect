@@ -180,8 +180,14 @@ function SignupPage() {
         return "Please use a valid official institution email address.";
       }
 
-      if (formData.password.length < 8) {
-        return "Password must be at least 8 characters.";
+      const pwd = formData.password;
+      const hasUppercase = /[A-Z]/.test(pwd);
+      const hasLowercase = /[a-z]/.test(pwd);
+      const hasNumber = /[0-9]/.test(pwd);
+      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
+
+      if (pwd.length < 8 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+        return "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.";
       }
 
       if (formData.password !== formData.confirmPassword) {
@@ -555,7 +561,7 @@ function SignupPage() {
                     name="password"
                     value={formData.password}
                     onChange={handleInput}
-                    placeholder="At least 8 characters"
+                    placeholder="Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special"
                   />
                 </label>
 

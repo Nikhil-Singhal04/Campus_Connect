@@ -1386,9 +1386,19 @@ app.post("/api/auth/otp/send", otpLimiter, async (req, res) => {
       return jsonError(res, 400, "Please provide a valid email address.");
     }
 
+    const now = Date.now();
+    const blockCheck = await get(
+      `SELECT created_at FROM otp_challenges
+       WHERE email = ? AND attempts >= 3 AND created_at > ?
+       ORDER BY id DESC LIMIT 1`,
+      [email, now - 30 * 60 * 1000]
+    );
+    if (blockCheck) {
+      return jsonError(res, 429, "Too many incorrect attempts. Please try again after 30 minutes.");
+    }
+
     const code = createOtpCode();
     const codeHash = hashOtp(code);
-    const now = Date.now();
     const expiresAt = now + Number(OTP_EXPIRY_MINUTES) * 60 * 1000;
 
     await run(
@@ -1453,6 +1463,16 @@ app.post("/api/auth/otp/verify", authLimiter, async (req, res) => {
     }
 
     const now = Date.now();
+    const blockCheck = await get(
+      `SELECT created_at FROM otp_challenges
+       WHERE email = ? AND attempts >= 3 AND created_at > ?
+       ORDER BY id DESC LIMIT 1`,
+      [email, now - 30 * 60 * 1000]
+    );
+    if (blockCheck) {
+      return jsonError(res, 429, "Too many incorrect attempts. Please try again after 30 minutes.");
+    }
+
     const challenge = await get(
       `SELECT * FROM otp_challenges
        WHERE email = ? AND verified = 0 AND expires_at > ?
@@ -1465,14 +1485,18 @@ app.post("/api/auth/otp/verify", authLimiter, async (req, res) => {
       return jsonError(res, 400, "No active verification challenge found.");
     }
 
-    if (challenge.attempts >= 5) {
-      return jsonError(res, 429, "Too many incorrect attempts. Request a new code.");
+    if (challenge.attempts >= 3) {
+      return jsonError(res, 429, "Too many incorrect attempts. Please try again after 30 minutes.");
     }
 
     const incomingHash = hashOtp(code);
     if (incomingHash !== challenge.code_hash) {
-      await run(`UPDATE otp_challenges SET attempts = attempts + 1 WHERE id = ?`, [challenge.id]);
-      return jsonError(res, 400, "Incorrect verification code.");
+      const nextAttempts = challenge.attempts + 1;
+      await run(`UPDATE otp_challenges SET attempts = ? WHERE id = ?`, [nextAttempts, challenge.id]);
+      if (nextAttempts >= 3) {
+        return jsonError(res, 429, "Too many incorrect attempts. Please try again after 30 minutes.");
+      }
+      return jsonError(res, 400, `Incorrect verification code. You have ${3 - nextAttempts} attempts remaining.`);
     }
 
     await run(`UPDATE otp_challenges SET verified = 1 WHERE id = ?`, [challenge.id]);
@@ -1543,8 +1567,14 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
       return jsonError(res, 400, "Invalid username format.");
     }
 
-    if (!String(password || "").trim() || String(password).length < 8) {
-      return jsonError(res, 400, "Password must be at least 8 characters.");
+    const pwd = String(password || "");
+    const hasUppercase = /[A-Z]/.test(pwd);
+    const hasLowercase = /[a-z]/.test(pwd);
+    const hasNumber = /[0-9]/.test(pwd);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
+
+    if (pwd.length < 8 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+      return jsonError(res, 400, "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
     }
 
     if (!firstName || !lastName || !regNo || !department || !programOrUnit || !yearOrDesignation) {
