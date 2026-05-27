@@ -56,6 +56,36 @@ resource "aws_s3_bucket_policy" "frontend" {
   })
 }
 
+# CloudFront Function for appending .html to clean URLs
+resource "aws_cloudfront_function" "clean_urls" {
+  name    = "${var.app_name}-clean-urls"
+  runtime = "cloudfront-js-2.0"
+  comment = "Appends .html extension to clean URL paths"
+  publish = true
+  code    = <<EOF
+function handler(event) {
+    var request = event.request;
+    var uri = request.uri;
+    
+    if (uri === '/') {
+        return request;
+    }
+    
+    var cleanUri = uri;
+    if (uri.charAt(uri.length - 1) === '/') {
+        cleanUri = uri.substring(0, uri.length - 1);
+    }
+    
+    var lastSegment = cleanUri.substring(cleanUri.lastIndexOf('/') + 1);
+    if (lastSegment && !lastSegment.includes('.')) {
+        request.uri = cleanUri + '.html';
+    }
+    
+    return request;
+}
+EOF
+}
+
 # CloudFront Distribution
 resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
@@ -102,6 +132,11 @@ resource "aws_cloudfront_distribution" "cdn" {
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.clean_urls.arn
+    }
   }
 
   # Custom Cache Behavior for Backend API (/api/*) - Bypasses Caching and Forwards headers
