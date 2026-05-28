@@ -55,14 +55,14 @@ function createGeminiModel(modelName) {
 
 function getPrimaryModel() {
   if (!cachedModel) {
-    cachedModel = createGeminiModel("gemini-2.0-flash");
+    cachedModel = createGeminiModel("gemini-3.5-flash");
   }
   return cachedModel;
 }
 
 function getFallbackModel() {
   if (!cachedFallbackModel) {
-    cachedFallbackModel = createGeminiModel("gemini-1.5-flash");
+    cachedFallbackModel = createGeminiModel("gemini-2.5-flash");
   }
   return cachedFallbackModel;
 }
