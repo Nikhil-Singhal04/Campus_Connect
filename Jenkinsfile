@@ -26,6 +26,20 @@ pipeline {
             }
         }
 
+        stage('Secrets Scan (GitLeaks)') {
+            steps {
+                echo 'Scanning git repository for committed secrets...'
+                sh 'docker run --rm -v "$(pwd):/path" zricethezav/gitleaks:latest detect --source=/path --verbose --redact'
+            }
+        }
+
+        stage('Terraform Security Scan (Checkov)') {
+            steps {
+                echo 'Scanning Terraform files for security misconfigurations...'
+                sh 'docker run --rm -v "$(pwd):/tf" bridgecrew/checkov:latest -d /tf/terraform'
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
                 echo 'Installing Backend and Frontend node modules...'
@@ -37,6 +51,22 @@ pipeline {
                     // (Currently uses CDN libraries, but ready for extensions)
                     // sh 'npm install' 
                 }
+            }
+        }
+
+        stage('Dependency Vulnerability Scan (npm audit)') {
+            steps {
+                echo 'Scanning Node dependencies for known vulnerabilities...'
+                dir('Backend') {
+                    sh 'npm audit --audit-level=high'
+                }
+            }
+        }
+
+        stage('SAST Code Scan (Semgrep)') {
+            steps {
+                echo 'Scanning application source code for security flaws...'
+                sh 'docker run --rm -v "$(pwd):/src" returntocorp/semgrep semgrep scan --config=auto --exclude=node_modules --exclude=.terraform'
             }
         }
 
