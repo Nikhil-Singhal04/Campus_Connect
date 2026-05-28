@@ -33,7 +33,7 @@ function normalizeClubRecord(record) {
     id,
     label: String(record.name || record.label || id).trim(),
     description: String(record.description || record.desc || '').trim(),
-    icon: CLUB_ICON_MAP[id] || '•'
+    icon: id.startsWith('event_') ? '📅' : (CLUB_ICON_MAP[id] || '•')
   };
 }
 
@@ -128,7 +128,11 @@ function ConnectXPage() {
   const [text, setText] = useState('');
   const [postImage, setPostImage] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedView, setSelectedView] = useState('home');
+  const [selectedView, setSelectedView] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const clubParam = params.get('club');
+    return clubParam || 'home';
+  });
   const [availableClubs, setAvailableClubs] = useState(DEFAULT_CLUBS);
   const [replyingTo, setReplyingTo] = useState(null);
 
@@ -667,7 +671,7 @@ function BrowseClubsView({ availableClubs, joinedClubs, onJoin }) {
     <div className="animate-fadeUp">
       <h2 className="text-2xl font-extrabold text-[#1f3149] dark:text-white mb-5 tracking-tight">Available Clubs</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {availableClubs.map((club) => {
+        {availableClubs.filter(club => !club.id.startsWith('event_')).map((club) => {
           const isJoined = joinedClubs.includes(club.id);
           const theme = getClubTheme(club.id);
 

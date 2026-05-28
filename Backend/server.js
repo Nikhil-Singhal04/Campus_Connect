@@ -844,6 +844,34 @@ app.post("/api/events/:id/register", authLimiter, async (req, res) => {
       [eventId, user.id, fullName, email, phone, yearOrDesignation, notes, pricingLabel, paymentPath || null, Date.now()]
     );
 
+    // Auto-join the event chat group
+    try {
+      const clubId = `event_${eventId}`;
+      // Double check if the club entry exists in case it was created/approved before this system was in place
+      const existingClub = await get(`SELECT id FROM clubs WHERE id = ?`, [clubId]);
+      if (!existingClub) {
+        await run(
+          `INSERT INTO clubs (id, name, description, created_at) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO NOTHING`,
+          [clubId, event.title, `Event Chat Group for ${event.title}`, Date.now()]
+        );
+      }
+      // Add the user to the club memberships
+      await run(
+        `INSERT INTO club_memberships (club_id, user_id, created_at) VALUES (?, ?, ?) ON CONFLICT (club_id, user_id) DO NOTHING`,
+        [clubId, user.id, Date.now()]
+      );
+      // Also ensure the organizer is a member in case they weren't added
+      const organizer = await get(`SELECT organizer_id FROM events WHERE id = ?`, [eventId]);
+      if (organizer) {
+        await run(
+          `INSERT INTO club_memberships (club_id, user_id, created_at) VALUES (?, ?, ?) ON CONFLICT (club_id, user_id) DO NOTHING`,
+          [clubId, organizer.organizer_id, Date.now()]
+        );
+      }
+    } catch (clubErr) {
+      console.error("Auto-join event chat group failed:", clubErr);
+    }
+
     try {
       await sendRegistrationNotifications({
         resend,
@@ -1253,7 +1281,7 @@ app.patch("/api/admin/events/:id/approve", adminLimiter, requireDeveloper, async
       return jsonError(res, 400, "Invalid event id.");
     }
 
-    const event = await get(`SELECT id, approval_status AS approvalStatus FROM events WHERE id = ?`, [eventId]);
+    const event = await get(`SELECT id, title, organizer_id, approval_status AS approvalStatus FROM events WHERE id = ?`, [eventId]);
     if (!event) {
       return jsonError(res, 404, "Event not found.");
     }
@@ -1263,6 +1291,26 @@ app.patch("/api/admin/events/:id/approve", adminLimiter, requireDeveloper, async
     }
 
     await run(`UPDATE events SET approval_status = 'Approved', edit_change_summary = NULL, edit_requested_at = NULL WHERE id = ?`, [eventId]);
+
+    // Create/update the event club and join organizer
+    try {
+      const clubId = `event_${eventId}`;
+      await run(
+        `INSERT INTO clubs (id, name, description, created_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`,
+        [clubId, event.title, `Event Chat Group for ${event.title}`, Date.now()]
+      );
+      await run(
+        `INSERT INTO club_memberships (club_id, user_id, created_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT (club_id, user_id) DO NOTHING`,
+        [clubId, event.organizer_id, Date.now()]
+      );
+    } catch (clubErr) {
+      console.error("Failed to create club or enroll organizer on event approval:", clubErr);
+    }
+
     return res.json({ message: "Event approved successfully." });
   } catch (error) {
     console.error("Approve event error:", error);
@@ -1288,6 +1336,7 @@ app.patch("/api/admin/events/:id/approve-delete", adminLimiter, requireDeveloper
 
     await run(`DELETE FROM event_registrations WHERE event_id = ?`, [eventId]);
     await run(`DELETE FROM events WHERE id = ?`, [eventId]);
+    await run(`DELETE FROM clubs WHERE id = ?`, [`event_${eventId}`]);
     return res.json({ message: "Event deleted after admin approval." });
   } catch (error) {
     console.error("Approve delete event error:", error);

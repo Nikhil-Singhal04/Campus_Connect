@@ -217,6 +217,36 @@ async function initializeDatabase() {
       );
     }
 
+    // Backfill approved event clubs and their memberships (organizer & registrants)
+    const approvedEvents = await all(`SELECT id, title, organizer_id FROM events WHERE approval_status = 'Approved'`);
+    for (const event of approvedEvents) {
+      const clubId = `event_${event.id}`;
+      // Seed/update event club
+      await run(
+        `INSERT INTO clubs (id, name, description, created_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`,
+        [clubId, event.title, `Event Chat Group for ${event.title}`, Date.now()]
+      );
+      // Auto-enroll organizer
+      await run(
+        `INSERT INTO club_memberships (club_id, user_id, created_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT (club_id, user_id) DO NOTHING`,
+        [clubId, event.organizer_id, Date.now()]
+      );
+      // Auto-enroll all registrants
+      const registrations = await all(`SELECT user_id FROM event_registrations WHERE event_id = ?`, [event.id]);
+      for (const reg of registrations) {
+        await run(
+          `INSERT INTO club_memberships (club_id, user_id, created_at)
+           VALUES (?, ?, ?)
+           ON CONFLICT (club_id, user_id) DO NOTHING`,
+          [clubId, reg.user_id, Date.now()]
+        );
+      }
+    }
+
     console.log("Database initialized successfully!");
     return true;
   } catch (error) {

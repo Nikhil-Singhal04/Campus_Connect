@@ -639,6 +639,14 @@ function OrganizerDashboardPage() {
                       >
                         {expandedEventId === event.id ? "Hide Registrations" : "View Registrations"}
                       </button>
+                      {event.approvalStatus === "Approved" && (
+                        <a
+                          href={`connectx.html?club=event_${event.id}`}
+                          className="rounded-lg border border-[#c9d8e7] bg-white px-3 py-1.5 text-xs font-semibold text-[#1f3149] transition hover:border-[#0ea59699] hover:text-[#0e8f84] inline-flex items-center gap-1"
+                        >
+                          View Chat
+                        </a>
+                      )}
                     </div>
 
                     <div className="mt-3 rounded-lg border border-[#f1d5dc] bg-[#fff7f9] p-3">
