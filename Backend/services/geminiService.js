@@ -11,6 +11,7 @@ Campus Connect is a college platform where students can:
 - browse campus events
 - register for events
 - join student communities
+- use ConnectX (a campus-wide social feed to create posts, view updates, like posts, and write comments)
 - manage profiles
 - receive notifications
 
