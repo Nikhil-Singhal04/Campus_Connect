@@ -3,6 +3,94 @@ const { useEffect, useMemo, useRef, useState } = React;
 const CHATBOT_WELCOME =
   "Hi! I am your Campus Connect assistant. Ask me about events, registrations, profiles, or admin tasks.";
 
+// Helper to render markdown-like bold (**text**)
+function renderTextWithBold(text, isUser) {
+  if (!text.includes('**')) return text;
+  
+  const parts = text.split('**');
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      return (
+        <strong 
+          key={i} 
+          className={`font-semibold ${isUser ? 'text-white' : 'text-[#111c2b] font-bold'}`}
+        >
+          {part}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
+// Helper to render clean structured lists and text blocks instead of raw markdown chars
+function renderFormattedMessage(content, isUser) {
+  if (!content) return null;
+  
+  const lines = content.split('\n');
+  const textClass = isUser ? 'text-white' : 'text-[#1f3149]';
+  const bulletColorClass = isUser ? 'bg-white' : 'bg-[#0ea596]';
+  const subBulletColorClass = isUser ? 'bg-white/70' : 'bg-[#0ea596]/70';
+
+  return (
+    <div className="space-y-1.5">
+      {lines.map((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={index} className="h-1" />;
+        }
+
+        // Detect if line is indented sub-bullet (starts with spaces and * or -)
+        const isSubBullet = line.startsWith('  ') && (trimmed.startsWith('*') || trimmed.startsWith('-'));
+        
+        // Detect if line is a primary bullet (starts with * or -)
+        const isPrimaryBullet = !line.startsWith('  ') && (trimmed.startsWith('*') || trimmed.startsWith('-'));
+        
+        // Detect numbered list (e.g., "1. item")
+        const matchNumbered = trimmed.match(/^(\d+)\.\s+(.*)$/);
+
+        if (isSubBullet) {
+          const cleanText = trimmed.replace(/^[\*\-]\s*/, '');
+          return (
+            <div key={index} className={`pl-5 flex items-start gap-2 text-xs ${isUser ? 'text-white/90' : 'text-[#5f748a]'}`}>
+              <span className={`mt-1.5 h-1 w-1 rounded-full ${subBulletColorClass} shrink-0`} />
+              <span>{renderTextWithBold(cleanText, isUser)}</span>
+            </div>
+          );
+        }
+
+        if (isPrimaryBullet) {
+          const cleanText = trimmed.replace(/^[\*\-]\s*/, '');
+          return (
+            <div key={index} className={`pl-1.5 flex items-start gap-2 text-sm ${textClass}`}>
+              <span className={`mt-2 h-1.5 w-1.5 rounded-full ${bulletColorClass} shrink-0`} />
+              <span className="flex-1">{renderTextWithBold(cleanText, isUser)}</span>
+            </div>
+          );
+        }
+
+        if (matchNumbered) {
+          const num = matchNumbered[1];
+          const cleanText = matchNumbered[2];
+          return (
+            <div key={index} className={`pl-1.5 flex items-start gap-2 text-sm ${textClass}`}>
+              <span className={`font-semibold text-xs mt-0.5 shrink-0 ${isUser ? 'text-white' : 'text-[#0ea596]'}`}>{num}.</span>
+              <span className="flex-1">{renderTextWithBold(cleanText, isUser)}</span>
+            </div>
+          );
+        }
+
+        // Default line
+        return (
+          <p key={index} className={`text-sm leading-relaxed ${textClass}`}>
+            {renderTextWithBold(line, isUser)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(() => [
@@ -132,13 +220,13 @@ function ChatbotWidget() {
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[82%] rounded-2xl px-4 py-2 text-sm shadow-sm whitespace-pre-wrap ${
+                  className={`max-w-[82%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
                     message.role === "user"
                       ? "bg-[#0e8f84] text-white"
                       : "bg-white text-[#1f3149] border border-[#e0ecf6]"
                   }`}
                 >
-                  {message.content}
+                  {renderFormattedMessage(message.content, message.role === "user")}
                 </div>
               </div>
             ))}
