@@ -559,28 +559,30 @@ function DashboardPage() {
                     <p className="flex items-center gap-2">🕐 <span>{event.time}</span></p>
                     <p className="flex items-center gap-2">📍 <span>{event.location}</span></p>
                   </div>
-                  <button
-                    onClick={() => handleRegisterClick(event)}
-                    disabled={isAdminSession || registeredEventIdSet.has(Number(event.id)) || isEventPast(event.date)}
-                    className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(14,143,132,0.2)] transition ${
-                      isAdminSession
-                        ? "cursor-not-allowed bg-[#7b8ea3]"
-                        : registeredEventIdSet.has(Number(event.id))
-                        ? "cursor-not-allowed bg-[#7ba8a3]"
-                        : isEventPast(event.date)
-                        ? "cursor-not-allowed bg-[#9ca3a8]"
-                        : "bg-[#0e8f84] hover:bg-[#0d7a6e]"
-                    }`}
-                  >
-                        {isAdminSession
-                          ? "Admin View"
+                  <div className="mt-5 flex items-center gap-4">
+                    <button
+                      onClick={() => handleRegisterClick(event)}
+                      disabled={isAdminSession || registeredEventIdSet.has(Number(event.id)) || isEventPast(event.date)}
+                      className={`rounded-full px-6 py-2.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(14,143,132,0.2)] transition ${
+                        isAdminSession
+                          ? "cursor-not-allowed bg-[#7b8ea3]"
                           : registeredEventIdSet.has(Number(event.id))
-                          ? "Registered"
+                          ? "cursor-not-allowed bg-[#7ba8a3]"
                           : isEventPast(event.date)
-                          ? "Event Wrapped Up"
-                          : "Register"}
-                  </button>
-                <a href={`event-discussion.html?id=${encodeURIComponent(event.id)}`} className="mt-3 inline-block text-sm font-semibold text-[#0e8f84] hover:underline">Discuss</a>
+                          ? "cursor-not-allowed bg-[#9ca3a8]"
+                          : "bg-[#0e8f84] hover:bg-[#0d7a6e]"
+                      }`}
+                    >
+                          {isAdminSession
+                            ? "Admin View"
+                            : registeredEventIdSet.has(Number(event.id))
+                            ? "Registered"
+                            : isEventPast(event.date)
+                            ? "Event Wrapped Up"
+                            : "Register"}
+                    </button>
+                    <a href={`event-discussion.html?id=${encodeURIComponent(event.id)}`} className="rounded-full border border-[#0e8f84] px-5 py-2 text-sm font-semibold text-[#0e8f84] transition hover:bg-[#e1f2ee]">Discuss</a>
+                  </div>
                 </div>
               </div>
             ))}
