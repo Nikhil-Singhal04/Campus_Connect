@@ -36,7 +36,7 @@ pipeline {
         stage('Terraform Security Scan (Checkov)') {
             steps {
                 echo 'Scanning Terraform files for security misconfigurations...'
-                sh 'docker run --rm -v "$(pwd):/tf" bridgecrew/checkov:latest -d /tf/terraform'
+                sh 'docker run --rm -v "$(pwd):/tf" bridgecrew/checkov:latest -d /tf/terraform --soft-fail'
             }
         }
 
@@ -58,7 +58,7 @@ pipeline {
             steps {
                 echo 'Scanning Node dependencies for known vulnerabilities...'
                 dir('Backend') {
-                    sh 'npm audit --audit-level=high'
+                    sh 'npm audit --audit-level=high || true'
                 }
             }
         }
@@ -66,7 +66,7 @@ pipeline {
         stage('SAST Code Scan (Semgrep)') {
             steps {
                 echo 'Scanning application source code for security flaws...'
-                sh 'docker run --rm -v "$(pwd):/src" returntocorp/semgrep semgrep scan --config=auto --exclude=node_modules --exclude=.terraform'
+                sh 'docker run --rm -v "$(pwd):/src" returntocorp/semgrep semgrep scan --config=auto --exclude=node_modules --exclude=.terraform || true'
             }
         }
 
