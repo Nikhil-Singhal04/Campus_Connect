@@ -1,0 +1,17 @@
+# GitLeaks Ignore File
+# Fingerprints of known historical findings and documentation examples to ignore
+
+# Historical committed API keys in .env
+ebbd47416418e098e4a5cd9d12bf40a308d13d00:.env:generic-api-key:32
+54613c54c0413ad2a12252dd0728717bcf5d3df4:.env:gcp-api-key:39
+
+# Documentation authorization token placeholders
+50efa7f588b3a0f37c4c68f8d3e0dcc546515901:docs/FRONTEND_BACKEND_INTEGRATION_SETUP.md:curl-auth-header:346
+6ef52dc1b1dfa4f51734e641204a57149f28703b:docs/FRONTEND_BACKEND_INTEGRATION_SETUP.md:curl-auth-header:346
+
+# Documentation clientSecret placeholders
+50efa7f588b3a0f37c4c68f8d3e0dcc546515901:docs/API_DOCUMENTATION.md:generic-api-key:976
+6ef52dc1b1dfa4f51734e641204a57149f28703b:docs/API_DOCUMENTATION.md:generic-api-key:976
+
+# Placeholder API key in Backend/.env.example
+571bfc305044fbe8599f22ebe88d60252db1b939:Backend/.env.example:generic-api-key:14

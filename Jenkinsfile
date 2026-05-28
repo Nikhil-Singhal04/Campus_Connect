@@ -161,19 +161,27 @@ pipeline {
         success {
             echo 'Deployment successful. Sending notification...'
             // Requires the Jenkins Slack Plugin installed and configured
-            slackSend(
-                channel: '#deployments',
-                color: 'good',
-                message: "🚀 *Campus Connect* - Build #${BUILD_NUMBER} was SUCCESSFUL!\nDeployed to AWS ECS (Backend) and AWS S3/CloudFront (Frontend).\nDetails: ${env.RUN_DISPLAY_URL}"
-            )
+            try {
+                slackSend(
+                    channel: '#deployments',
+                    color: 'good',
+                    message: "🚀 *Campus Connect* - Build #${BUILD_NUMBER} was SUCCESSFUL!\nDeployed to AWS ECS (Backend) and AWS S3/CloudFront (Frontend).\nDetails: ${env.RUN_DISPLAY_URL}"
+                )
+            } catch (Exception e) {
+                echo "Slack notification failed: ${e.getMessage()}"
+            }
         }
         failure {
             echo 'Deployment failed. Sending alert...'
-            slackSend(
-                channel: '#deployments',
-                color: 'danger',
-                message: "❌ *Campus Connect* - Build #${BUILD_NUMBER} FAILED at stage '${env.STAGE_NAME}'.\nCheck logs: ${env.RUN_DISPLAY_URL}"
-            )
+            try {
+                slackSend(
+                    channel: '#deployments',
+                    color: 'danger',
+                    message: "❌ *Campus Connect* - Build #${BUILD_NUMBER} FAILED at stage '${env.STAGE_NAME}'.\nCheck logs: ${env.RUN_DISPLAY_URL}"
+                )
+            } catch (Exception e) {
+                echo "Slack notification failed: ${e.getMessage()}"
+            }
         }
     }
 }
