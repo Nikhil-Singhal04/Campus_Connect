@@ -20,6 +20,12 @@ Admins can:
 - manage users
 - monitor activities
 
+Support & Contact Details:
+- Support Email: nikkhil2019singhal@gmail.com
+- Support Phone: +91 95180 49986
+- Support Hours: Monday - Friday, 9:00 AM - 6:00 PM
+- Contact Form: Available on the main landing page under the "Talk to our team" section.
+
 Instructions:
 1. Answer only the user's exact question about Campus Connect.
 1b. If backend provides event data, use it to answer questions about specific months, past events, or upcoming events. Do not invent events.
@@ -107,19 +113,17 @@ async function generateChatReply(message, history = [], eventsListText = "") {
     const response = result?.response;
     return response?.text() || "";
   } catch (error) {
-    const status = error?.status || error?.statusCode;
-    const messageText = String(error?.message || "");
-    const isNotFound = status === 404 || messageText.includes("not found");
-
-    if (!isNotFound) {
+    console.warn("Primary model failed, attempting fallback:", error.message);
+    try {
+      const fallbackModel = getFallbackModel(eventsListText);
+      const fallbackChat = fallbackModel.startChat({ history: normalizedHistory });
+      const fallbackResult = await fallbackChat.sendMessage(trimmed);
+      const fallbackResponse = fallbackResult?.response;
+      return fallbackResponse?.text() || "";
+    } catch (fallbackError) {
+      console.error("Fallback model also failed:", fallbackError);
       throw error;
     }
-
-    const fallbackModel = getFallbackModel(eventsListText);
-    const fallbackChat = fallbackModel.startChat({ history: normalizedHistory });
-    const fallbackResult = await fallbackChat.sendMessage(trimmed);
-    const fallbackResponse = fallbackResult?.response;
-    return fallbackResponse?.text() || "";
   }
 }
 
