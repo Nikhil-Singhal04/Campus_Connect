@@ -22,21 +22,24 @@ Admins can:
 
 Instructions:
 1. Answer only the user's exact question about Campus Connect.
-1b. If backend provides event data, use it and do not invent events.
+1b. If backend provides event data, use it to answer questions about specific months, past events, or upcoming events. Do not invent events.
 2. Keep responses short and direct (1-3 sentences).
 3. Do not invent features or UI elements.
 4. If unsure, say you are not sure and suggest contacting admin.
-5. Avoid step-by-step lists unless the user explicitly asks for steps.
+5. Avoid step-by-step lists unless the user explicitly asks for steps or asks how to do something (like registering for an event).
 6. Never expose technical backend details or API keys.
 7. Be polite and professional.
 8. Help users navigate the platform using only known features.
 9. If the user greets you, respond naturally.
-10. If the question is unrelated, politely redirect to Campus Connect topics.`;
+10. If the question is unrelated, politely redirect to Campus Connect topics.
+11. When asked how to register for an event, explain these steps:
+    1. Go to the Dashboard.
+    2. Find the desired event and click the "Register" button.
+    3. Fill in any required registration details.
+    4. Click the "Verify Payment & Register" (or "Register") button to complete your registration.`;
 
-let cachedModel = null;
-let cachedFallbackModel = null;
 
-function createGeminiModel(modelName) {
+function createGeminiModel(modelName, eventsListText = "") {
   const apiKey = String(process.env.GEMINI_API_KEY || "").trim();
   if (!apiKey) {
     const error = new Error("Gemini API key is not configured.");
@@ -45,27 +48,22 @@ function createGeminiModel(modelName) {
   }
 
   const client = new GoogleGenerativeAI(apiKey);
+  const systemInstructionText = SYSTEM_PROMPT + (eventsListText ? `\n\nReal-time Event Data from database:\n${eventsListText}` : "");
   return client.getGenerativeModel({
     model: modelName,
     systemInstruction: {
       role: "system",
-      parts: [{ text: SYSTEM_PROMPT }]
+      parts: [{ text: systemInstructionText }]
     }
   });
 }
 
-function getPrimaryModel() {
-  if (!cachedModel) {
-    cachedModel = createGeminiModel("gemini-3.5-flash");
-  }
-  return cachedModel;
+function getPrimaryModel(eventsListText = "") {
+  return createGeminiModel("gemini-3.5-flash", eventsListText);
 }
 
-function getFallbackModel() {
-  if (!cachedFallbackModel) {
-    cachedFallbackModel = createGeminiModel("gemini-2.5-flash");
-  }
-  return cachedFallbackModel;
+function getFallbackModel(eventsListText = "") {
+  return createGeminiModel("gemini-2.5-flash", eventsListText);
 }
 
 function normalizeHistory(history) {
@@ -92,7 +90,7 @@ function normalizeHistory(history) {
   return normalized;
 }
 
-async function generateChatReply(message, history = []) {
+async function generateChatReply(message, history = [], eventsListText = "") {
   const trimmed = String(message || "").trim();
   if (!trimmed) {
     const error = new Error("Message is required.");
@@ -103,7 +101,7 @@ async function generateChatReply(message, history = []) {
   const normalizedHistory = normalizeHistory(history);
 
   try {
-    const model = getPrimaryModel();
+    const model = getPrimaryModel(eventsListText);
     const chat = model.startChat({ history: normalizedHistory });
     const result = await chat.sendMessage(trimmed);
     const response = result?.response;
@@ -117,7 +115,7 @@ async function generateChatReply(message, history = []) {
       throw error;
     }
 
-    const fallbackModel = getFallbackModel();
+    const fallbackModel = getFallbackModel(eventsListText);
     const fallbackChat = fallbackModel.startChat({ history: normalizedHistory });
     const fallbackResult = await fallbackChat.sendMessage(trimmed);
     const fallbackResponse = fallbackResult?.response;
